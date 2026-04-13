@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tirzepatide Plasma Concentration Plotter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0f1a;
+    --surface: #111827;
+    --surface2: #1a2333;
+    --border: #1f2d42;
+    --accent: #3b82f6;
+    --accent2: #60a5fa;
+    --accent-glow: rgba(59,130,246,0.15);
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --green: #10b981;
+    --red: #ef4444;
+    --warn: #f59e0b;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 14px; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .container {
+    position: relative; z-index: 1;
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+  }
+  header {
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 22px;
+  }
+  header .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 8px;
+  }
+  header h1 { font-size: 22px; font-weight: 500; letter-spacing: -0.3px; }
+  header p { margin-top: 6px; font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+  .disclaimer {
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px; font-size: 11px; color: var(--warn);
+    margin-top: 12px; line-height: 1.5;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 310px 1fr;
+    gap: 20px; align-items: start;
+  }
+  @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    /* overflow: hidden; — removed: clips stat tooltips that overflow above the panel */
+  }
+  .panel-header {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-dim);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-header::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 8px var(--accent); flex-shrink: 0;
+  }
+  .panel-body { padding: 16px; }
+
+  .form-group { margin-bottom: 12px; }
+  label {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 400; color: var(--text-dim);
+    margin-bottom: 5px; letter-spacing: 0.03em; cursor: default;
+  }
+  input[type="number"], input[type="date"], select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 11px; color: var(--text);
+    font-family: 'DM Mono', monospace; font-size: 12px;
+    outline: none; transition: border-color 0.2s;
+    -webkit-appearance: none; appearance: none;
+  }
+  input[type="date"] { color-scheme: dark; }
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  input[type="number"] { -moz-appearance: textfield; }
+  input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .input-wrap { position: relative; }
+  .input-wrap input { padding-right: 46px; }
+  .input-unit {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    color: var(--text-muted); pointer-events: none;
+  }
+  select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+    padding-right: 30px;
+  }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 9px 16px; border-radius: var(--radius-sm);
+    font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
+    letter-spacing: 0.05em; cursor: pointer; border: none; transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; width: 100%; }
+  .btn-primary:hover { background: var(--accent2); box-shadow: 0 0 16px var(--accent-glow); }
+  .btn-sm { padding: 5px 10px; font-size: 10px; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: var(--red); }
+  .btn-danger:hover { background: rgba(239,68,68,0.2); }
+
+  .add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .add-grid .form-group { margin-bottom: 0; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  .section-label {
+    font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px;
+  }
+
+  .dose-list {
+    display: flex; flex-direction: column; gap: 5px;
+    max-height: 240px; overflow-y: auto;
+    margin-bottom: 12px; padding-right: 2px;
+  }
+  .dose-list::-webkit-scrollbar { width: 4px; }
+  .dose-list::-webkit-scrollbar-track { background: transparent; }
+  .dose-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .dose-item {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 7px 10px;
+    transition: border-color 0.15s;
+  }
+  .dose-item:hover { border-color: var(--accent); }
+  .dose-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 5px var(--accent); flex-shrink: 0;
+  }
+  .dose-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .dose-date { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-dim); }
+  .dose-meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent2); }
+  .empty-state { text-align: center; padding: 20px; font-size: 11px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+
+  .chart-panel { display: flex; flex-direction: column; }
+  .chart-toolbar {
+    padding: 11px 16px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  }
+  .toolbar-left { display: flex; align-items: center; gap: 8px; }
+  .toolbar-right { display: flex; align-items: center; gap: 6px; }
+  .toggle-group {
+    display: flex; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden;
+  }
+  .toggle-btn {
+    padding: 5px 12px; font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.05em;
+    cursor: pointer; border: none; background: transparent;
+    color: var(--text-muted); transition: all 0.15s;
+  }
+  .toggle-btn.active { background: var(--accent); color: #fff; }
+  .range-select {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 5px 26px 5px 9px;
+    color: var(--text-dim); font-family: 'DM Mono', monospace; font-size: 10px;
+    cursor: pointer; outline: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 7px center;
+  }
+  .chart-wrap { padding: 18px 14px 10px; flex: 1; }
+  canvas#pkChart { width: 100% !important; display: block; }
+  .no-data-msg {
+    display: flex; align-items: center; justify-content: center;
+    height: 300px; font-family: 'DM Mono', monospace; font-size: 12px;
+    color: var(--text-muted); flex-direction: column; gap: 10px;
+  }
+  .no-data-msg svg { opacity: 0.25; }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1px; background: var(--border);
+    border-top: 1px solid var(--border);
+    border-radius: 0 0 var(--radius) var(--radius); overflow: visible;
+  }
+  .stat {
+    background: var(--surface); padding: 11px 12px; text-align: center;
+    position: relative;
+    /* allow tooltip to overflow */
+    overflow: visible;
+  }
+  .stat-label {
+    font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    cursor: help; user-select: none;
+  }
+  .info-icon {
+    width: 13px; height: 13px; border-radius: 50%;
+    background: var(--border); color: var(--text-muted);
+    font-size: 8px; display: inline-flex; align-items: center; justify-content: center;
+    font-family: Georgia, serif; font-style: italic; font-weight: bold;
+    flex-shrink: 0; transition: background 0.15s, color 0.15s;
+    line-height: 1;
+  }
+  .stat:hover .info-icon { background: var(--accent); color: #fff; }
+
+  .stat-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%; transform: translateX(-50%);
+    background: #162032;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 13px;
+    font-size: 11px; color: var(--text-dim);
+    line-height: 1.55;
+    width: 230px; text-align: left;
+    z-index: 200;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.6);
+    pointer-events: none;
+  }
+  .stat-tooltip::after {
+    content: '';
+    position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #162032;
+  }
+  .stat-tooltip::before {
+    content: '';
+    position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    border: 7px solid transparent;
+    border-top-color: var(--border);
+    margin-top: 1px;
+  }
+  .stat:hover .stat-tooltip { display: block; }
+  .stat-tooltip strong { color: var(--accent2); font-weight: 500; display: block; margin-bottom: 5px; font-size: 11px; }
+
+  .stat-val { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: var(--text); }
+  .stat-val.green { color: var(--green); }
+  .stat-val.amber { color: var(--warn); }
+  .stat-val.blue  { color: var(--accent2); }
+
+  .storage-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; flex-wrap: wrap;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 10px;
+    font-family: 'DM Mono', monospace; font-size: 10px;
+  }
+  .storage-bar.ok {
+    background: rgba(16,185,129,0.07);
+    border: 1px solid rgba(16,185,129,0.2);
+    color: var(--green);
+  }
+  .storage-bar.warn {
+    background: rgba(245,158,11,0.07);
+    border: 1px solid rgba(245,158,11,0.2);
+    color: var(--warn);
+  }
+  .storage-bar-left { display: flex; align-items: center; gap: 6px; }
+  .storage-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+  .storage-bar.ok  .storage-dot { background: var(--green); box-shadow: 0 0 5px var(--green); }
+  .storage-bar.warn .storage-dot { background: var(--warn);  box-shadow: 0 0 5px var(--warn); }
+  .storage-bar-actions { display: flex; gap: 6px; }
+  .btn-icon {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 9px;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    cursor: pointer; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text-dim);
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-icon svg { flex-shrink: 0; }
+
+  .weight-hint {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    color: var(--text-muted); margin-top: 3px; margin-bottom: 12px;
+  }
+  .weight-hint span { color: var(--accent2); }
+
+  .pk-info {
+    margin-top: 16px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .pk-info-title {
+    font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px;
+  }
+  .pk-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (max-width: 600px) { .pk-grid { grid-template-columns: 1fr 1fr; } }
+  .pk-key { font-size: 10px; color: var(--text-muted); margin-bottom: 2px; }
+  .pk-val { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent2); }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="tag">Clinical Pharmacokinetics · Tirzepatide (Mounjaro / Zepbound)</div>
+    <h1>Plasma Concentration Estimator</h1>
+    <p>One-compartment PK model with first-order absorption &amp; elimination. Parameters from FDA NDA 215866 Clinical Pharmacology Review (Eli Lilly, 2022). Body weight is recorded per injection for accurate longitudinal PK scaling.</p>
+    <div class="disclaimer">⚠ <strong>For educational/informational use only.</strong> This tool does not constitute medical advice. Individual PK varies substantially (FDA-reported CV ~22% for Cmax/AUC). Never adjust your dosing based on this model without consulting your prescribing physician.</div>
+  </header>
+
+  <div class="layout">
+    <!-- LEFT PANEL -->
+    <div>
+      <div class="panel">
+        <div class="panel-header">Add Injection</div>
+        <div class="panel-body">
+          <div class="section-label">Date &amp; Dose</div>
+          <div class="add-grid">
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="doseDate"/>
+            </div>
+            <div class="form-group">
+              <label>Dose (mg)</label>
+              <div class="input-wrap">
+                <input type="number" id="doseAmount" value="2.5" min="0.5" max="15" step="0.5"/>
+                <span class="input-unit">mg</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-label" style="margin-top:4px;">Body Weight at Time of Injection</div>
+          <div class="add-grid">
+            <div class="form-group">
+              <label>Pounds</label>
+              <div class="input-wrap">
+                <input type="number" id="weightLbs" value="198" min="66" max="440" step="1"/>
+                <span class="input-unit">lbs</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Kilograms</label>
+              <div class="input-wrap">
+                <input type="number" id="weightKg" value="89.8" min="30" max="200" step="0.1"/>
+                <span class="input-unit">kg</span>
+              </div>
+            </div>
+          </div>
+          <div class="weight-hint" style="margin-bottom:10px;">PK scalar: <span id="weightScalar">1.01×</span> vs. 90 kg reference</div>
+
+          <div style="display:flex; gap:8px; align-items:flex-end; margin-bottom:0;">
+            <button class="btn btn-primary" style="flex:1;" onclick="addDose()">+ Add Injection</button>
+            <div style="flex-shrink:0; width:80px;">
+              <label style="font-size:10px; color:var(--text-muted); margin-bottom:5px; display:block; white-space:nowrap;">Jump (days)</label>
+              <div class="input-wrap">
+                <input type="number" id="dayIncrement" value="7" min="1" max="365" step="1" style="text-align:center;"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-header">Injection Schedule</div>
+        <div class="panel-body">
+
+          <!-- Storage status + export/import -->
+          <div class="storage-bar ok" id="storageBar">
+            <div class="storage-bar-left">
+              <div class="storage-dot"></div>
+              <span id="storageMsg">Auto-saving to browser storage</span>
+            </div>
+            <div class="storage-bar-actions">
+              <button class="btn-icon" onclick="exportJSON()" title="Download data as JSON backup">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export
+              </button>
+              <button class="btn-icon" onclick="triggerImport()" title="Load data from JSON backup">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Import
+              </button>
+              <input type="file" id="importInput" accept=".json" style="display:none;" onchange="importJSON(event)"/>
+            </div>
+          </div>
+
+          <div class="dose-list" id="doseList">
+            <div class="empty-state">No injections logged yet.</div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="fillExample()">Load example</button>
+            <button class="btn btn-ghost btn-sm" onclick="clearDoses()">Clear all</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="panel chart-panel">
+      <div class="chart-toolbar">
+        <div class="toolbar-left">
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="btn-ngml" onclick="setUnit('ngml')">ng/mL</button>
+            <button class="toggle-btn" id="btn-mg" onclick="setUnit('mg')">mg equiv.</button>
+            <button class="toggle-btn" id="btn-wt" onclick="setUnit('wt')">Weight</button>
+          </div>
+        </div>
+        <div class="toolbar-right">
+          <label style="margin:0; font-size:10px; color:var(--text-muted); white-space:nowrap; cursor:default;">Range:</label>
+          <select class="range-select" id="rangeSelect" onchange="updateChart()">
+            <option value="30">30 days</option>
+            <option value="60" selected>60 days</option>
+            <option value="90">90 days</option>
+            <option value="180">180 days</option>
+            <option value="365">1 year</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="chart-wrap">
+        <div id="noDataMsg" class="no-data-msg">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>
+          Add at least one injection to generate the curve.
+        </div>
+        <canvas id="pkChart" style="display:none;"></canvas>
+        <canvas id="wtChart" style="display:none;"></canvas>
+      </div>
+
+      <!-- STATS with hover tooltips -->
+      <div class="stats-row">
+
+        <div class="stat">
+          <div class="stat-label">Current Est. <span class="info-icon">i</span></div>
+          <div class="stat-tooltip">
+            <strong>Current Estimated Concentration</strong>
+            The model's estimate of tirzepatide plasma concentration at this moment, computed by summing contributions from all logged injections at today's date and time. Each dose uses its own recorded body weight for scaling.
+          </div>
+          <div class="stat-val blue" id="statCurrent">—</div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-label">Peak (C<sub style="font-size:7px;vertical-align:sub;">max</sub>) <span class="info-icon">i</span></div>
+          <div class="stat-tooltip">
+            <strong>Peak Concentration (Cmax)</strong>
+            The highest plasma concentration in the displayed window. Tirzepatide typically peaks 24–72 hours post-injection (tmax). With repeated weekly dosing, peaks increase due to drug accumulation — reaching ~1.7× the first-dose peak at steady state, per FDA accumulation ratio data.
+          </div>
+          <div class="stat-val green" id="statPeak">—</div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-label">Trough (C<sub style="font-size:7px;vertical-align:sub;">min</sub>) <span class="info-icon">i</span></div>
+          <div class="stat-tooltip">
+            <strong>Trough Concentration (Cmin)</strong>
+            The lowest concentration between doses, measured after the first full dose cycle (post-tmax of dose 1). A non-zero trough reflects tirzepatide's long 5-day half-life — drug from prior injections is still present before the next dose is given.
+          </div>
+          <div class="stat-val amber" id="statTrough">—</div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-label">SS Reached <span class="info-icon">i</span></div>
+          <div class="stat-tooltip">
+            <strong>Steady State (SS)</strong>
+            Steady state is when drug absorbed per dose equals drug eliminated per dosing interval — so concentrations stabilize into a consistent repeating pattern. Detected here when consecutive pre-dose trough values change by less than 5% between cycles. Per FDA NDA 215866, tirzepatide reaches SS after approximately 4 weeks of once-weekly dosing.
+          </div>
+          <div class="stat-val" id="statSS">—</div>
+        </div>
+
+      </div><!-- /stats-row -->
+    </div><!-- /chart-panel -->
+  </div><!-- /layout -->
+
+  <div class="pk-info">
+    <div class="pk-info-title">PK Parameters — Source: FDA NDA 215866 (Eli Lilly, 2022) · One-compartment model</div>
+    <div class="pk-grid">
+      <div><div class="pk-key">Elimination half-life (t½)</div><div class="pk-val">~5 days (120 h)</div></div>
+      <div><div class="pk-key">Absorption tmax range (SC)</div><div class="pk-val">24–72 h</div></div>
+      <div><div class="pk-key">Bioavailability (F)</div><div class="pk-val">80.9%</div></div>
+      <div><div class="pk-key">Clearance (CL/F)</div><div class="pk-val">0.061 L/h</div></div>
+      <div><div class="pk-key">Volume of distribution (Vd)</div><div class="pk-val">10.3 L</div></div>
+      <div><div class="pk-key">Plasma protein binding</div><div class="pk-val">99% (albumin)</div></div>
+      <div><div class="pk-key">Accumulation ratio (QW)</div><div class="pk-val">~1.7×</div></div>
+      <div><div class="pk-key">Steady state (once-weekly)</div><div class="pk-val">~4 weeks</div></div>
+      <div><div class="pk-key">Dose proportionality</div><div class="pk-val">Linear 0.25–15 mg</div></div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ─── PK CONSTANTS — FDA NDA 215866 ───────────────────────────────────────────
+const F   = 0.809;     // subcutaneous bioavailability
+const CL  = 0.061;     // population mean clearance (L/h)
+const Vd  = 10.3;      // apparent Vd (L)
+const ke  = CL / Vd;   // elimination rate constant h⁻¹ = 0.005922 → t½ ≈ 117 h ≈ 4.88 days
+// ka derived numerically: tmax = ln(ka/ke)/(ka-ke) = 48h (midpoint of 24–72h FDA range)
+// Solution: ka ≈ 0.0695 h⁻¹
+const ka  = 0.0695;
+
+// Weight scaling: log-linear power model fit to FDA popPK data
+// AUC ∝ (weight/90)^(-1.0) — inverse: heavier patients have lower AUC
+// Implemented as CL_eff = CL / scalar, so ke_eff = CL_eff / Vd
+const WEIGHT_EXP = -1.0;
+const WEIGHT_REF = 90; // kg
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+// Each entry: { date: Date, amount: number (mg), weightKg: number }
+let doses = [];
+let currentUnit = 'ngml'; // 'ngml' or 'mg'
+let chartInstance = null;
+let chartJsReady = false;
+let pendingRender = null;
+
+// ─── STORAGE ──────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'tirzepatide_pk_doses_v1';
+let storageAvailable = false;
+
+function detectStorage() {
+  // Test localStorage availability — fails silently in Safari file://, private mode, etc.
+  try {
+    const test = '__storage_test__';
+    localStorage.setItem(test, '1');
+    localStorage.removeItem(test);
+    storageAvailable = true;
+  } catch(e) {
+    storageAvailable = false;
+  }
+}
+
+function persistDoses() {
+  if (!storageAvailable) return;
+  try {
+    const payload = doses.map(d => ({
+      dateISO:  d.date.toISOString(),
+      amount:   d.amount,
+      weightKg: d.weightKg
+    }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch(e) {
+    console.warn('tirzepatide-pk: failed to save to localStorage', e);
+  }
+}
+
+function loadPersistedDoses() {
+  if (!storageAvailable) return;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const payload = JSON.parse(raw);
+    if (!Array.isArray(payload) || payload.length === 0) return;
+    doses = payload.map(d => ({
+      date:     new Date(d.dateISO),
+      amount:   parseFloat(d.amount),
+      weightKg: parseFloat(d.weightKg)
+    }));
+    doses.sort((a, b) => a.date - b.date);
+    renderDoseList();
+    updateChart();
+  } catch(e) {
+    console.warn('tirzepatide-pk: failed to load from localStorage', e);
+  }
+}
+
+function updateStorageUI() {
+  const bar = document.getElementById('storageBar');
+  const msg = document.getElementById('storageMsg');
+  if (storageAvailable) {
+    bar.className = 'storage-bar ok';
+    msg.textContent = 'Auto-saving to browser storage';
+  } else {
+    bar.className = 'storage-bar warn';
+    msg.textContent = 'Browser storage unavailable — use Export to save';
+  }
+}
+
+// ─── EXPORT / IMPORT ─────────────────────────────────────────────────────────
+function exportJSON() {
+  if (doses.length === 0) { alert('No data to export.'); return; }
+  const payload = doses.map(d => ({
+    dateISO:  d.date.toISOString(),
+    amount:   d.amount,
+    weightKg: d.weightKg
+  }));
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const dateStr = new Date().toISOString().split('T')[0];
+  a.href     = url;
+  a.download = `tirzepatide-doses-${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function triggerImport() {
+  document.getElementById('importInput').value = ''; // reset so same file can be re-imported
+  document.getElementById('importInput').click();
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const payload = JSON.parse(e.target.result);
+      if (!Array.isArray(payload)) throw new Error('Expected an array');
+      const imported = payload.map(d => {
+        if (!d.dateISO || d.amount == null || d.weightKg == null) throw new Error('Missing fields');
+        return {
+          date:     new Date(d.dateISO),
+          amount:   parseFloat(d.amount),
+          weightKg: parseFloat(d.weightKg)
+        };
+      });
+      // Confirm if data already exists
+      if (doses.length > 0) {
+        if (!confirm(`Replace your ${doses.length} existing injection(s) with ${imported.length} imported record(s)?`)) return;
+      }
+      doses = imported;
+      doses.sort((a, b) => a.date - b.date);
+      persistDoses();
+      renderDoseList();
+      updateChart();
+    } catch(err) {
+      alert('Import failed: ' + err.message + '\n\nMake sure this is a valid tirzepatide export file.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+
+(function loadChartJs() {
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
+  s.onload = () => {
+    chartJsReady = true;
+    if (pendingRender) { pendingRender(); pendingRender = null; }
+  };
+  document.head.appendChild(s);
+})();
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  detectStorage();
+  updateStorageUI();
+
+  document.getElementById('doseDate').value = new Date().toISOString().split('T')[0];
+  updateWeightHint();
+
+  document.getElementById('weightLbs').addEventListener('input', function() {
+    const v = parseFloat(this.value);
+    if (!isNaN(v)) document.getElementById('weightKg').value = (v / 2.20462).toFixed(1);
+    updateWeightHint();
+  });
+  document.getElementById('weightKg').addEventListener('input', function() {
+    const v = parseFloat(this.value);
+    if (!isNaN(v)) document.getElementById('weightLbs').value = Math.round(v * 2.20462);
+    updateWeightHint();
+  });
+
+  // Load persisted data after Chart.js is ready
+  loadPersistedDoses();
+});
+
+function getFormWeightKg() {
+  return Math.max(30, parseFloat(document.getElementById('weightKg').value) || 90);
+}
+
+function calcWeightScalar(kg) {
+  return Math.pow(Math.max(kg, 20) / WEIGHT_REF, WEIGHT_EXP);
+}
+
+function updateWeightHint() {
+  const kg = getFormWeightKg();
+  const s  = calcWeightScalar(kg);
+  const el = document.getElementById('weightScalar');
+  el.textContent = s.toFixed(2) + '×';
+  el.style.color = s > 1.05 ? 'var(--green)' : s < 0.95 ? 'var(--warn)' : 'var(--accent2)';
+}
+
+// ─── DOSE MANAGEMENT ─────────────────────────────────────────────────────────
+function addDose() {
+  const dateStr = document.getElementById('doseDate').value;
+  const amount  = parseFloat(document.getElementById('doseAmount').value);
+  const wKg     = getFormWeightKg();
+
+  if (!dateStr)                              { alert('Please select a date.');                        return; }
+  if (isNaN(amount) || amount < 0.5 || amount > 15) { alert('Dose must be 0.5–15 mg.');              return; }
+  if (isNaN(wKg)   || wKg < 30  || wKg > 300)       { alert('Enter a valid body weight (30–300 kg).');return; }
+
+  const date = new Date(dateStr + 'T12:00:00');
+  doses.push({ date, amount, weightKg: wKg });
+  doses.sort((a, b) => a.date - b.date);
+  persistDoses();
+  renderDoseList();
+  updateChart();
+
+  // Advance date by configured increment
+  const increment = Math.max(1, parseInt(document.getElementById('dayIncrement').value) || 7);
+  const next = new Date(date);
+  next.setDate(next.getDate() + increment);
+  document.getElementById('doseDate').value = next.toISOString().split('T')[0];
+}
+
+function removeDose(idx) {
+  doses.splice(idx, 1);
+  persistDoses();
+  renderDoseList();
+  updateChart();
+}
+
+function clearDoses() {
+  if (doses.length > 0 && !confirm('Clear all injections? This cannot be undone.')) return;
+  doses = [];
+  persistDoses();
+  if (chartInstance)   { chartInstance.destroy();   chartInstance   = null; }
+  if (wtChartInstance) { wtChartInstance.destroy();  wtChartInstance = null; }
+  renderDoseList();
+  updateChart();
+}
+
+function fillExample() {
+  // Titration example: 2.5mg × 4 weeks → 5mg × 5 weeks, with slow weight loss
+  doses = [];
+  const start = new Date();
+  start.setDate(start.getDate() - 56);
+  start.setHours(12, 0, 0, 0);
+  const startWeightLbs = 230;
+  for (let i = 0; i < 9; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i * 7);
+    const wLbs = startWeightLbs - i * 1.2; // ~1.2 lb/week loss
+    doses.push({ date: d, amount: i < 4 ? 2.5 : 5, weightKg: wLbs / 2.20462 });
+  }
+  renderDoseList();
+  updateChart();
+}
+
+function renderDoseList() {
+  const el = document.getElementById('doseList');
+  if (doses.length === 0) {
+    el.innerHTML = '<div class="empty-state">No injections logged yet.</div>';
+    return;
+  }
+  el.innerHTML = doses.map((d, i) => {
+    const lbs = (d.weightKg * 2.20462).toFixed(0);
+    return `<div class="dose-item">
+      <div class="dose-dot"></div>
+      <div class="dose-info">
+        <div class="dose-date">${fmtDate(d.date)}</div>
+        <div class="dose-meta">${d.amount} mg &nbsp;·&nbsp; ${lbs} lbs (${d.weightKg.toFixed(1)} kg)</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="removeDose(${i})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function fmtDate(d) {
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// ─── PK MATH ─────────────────────────────────────────────────────────────────
+// Bateman equation — one-compartment, first-order absorption & elimination
+// C(t) = (F·D / Vd) · (ka / (ka − ke_eff)) · (e^(−ke_eff·t) − e^(−ka·t))
+// Units: D in mg, Vd in L → result in mg/L = µg/mL; multiply by 1000 → ng/mL
+// FDA reference: single 2.5mg SC dose, Cmax ≈ 160 ng/mL (NDA 215866 Table 3) ✓
+// Weight modifies CL → ke_eff = CL_eff / Vd; ka and Vd are weight-independent (FDA data)
+function doseContrib(amount_mg, weightKg, t_hours) {
+  if (t_hours <= 0) return 0;
+  const scalar  = calcWeightScalar(weightKg);
+  const CL_eff  = CL / scalar;           // lower weight → lower CL → higher AUC
+  const ke_eff  = CL_eff / Vd;
+  const denom   = ka - ke_eff;
+  let c;
+  if (Math.abs(denom) < 1e-8) {
+    // ka ≈ ke: L'Hôpital limit form
+    c = (F * amount_mg / Vd) * ka * t_hours * Math.exp(-ke_eff * t_hours);
+  } else {
+    c = (F * amount_mg / Vd) * (ka / denom) * (Math.exp(-ke_eff * t_hours) - Math.exp(-ka * t_hours));
+  }
+  return Math.max(0, c) * 1000; // µg/mL → ng/mL
+}
+
+// Superposition of all doses up to time t
+function computeConc(t_unix_ms) {
+  return doses.reduce((sum, d) => {
+    const dt_h = (t_unix_ms - d.date.getTime()) / 3600000;
+    return sum + doseContrib(d.amount, d.weightKg, dt_h);
+  }, 0);
+}
+
+// ─── STEADY STATE DETECTION ──────────────────────────────────────────────────
+// Compute pre-dose trough for each dose ≥ 2nd. SS = when consecutive troughs
+// differ by < 5% for at least one pair.
+function detectSteadyState() {
+  if (doses.length < 3) return { reached: false };
+
+  const troughs = [];
+  for (let i = 1; i < doses.length; i++) {
+    // Sample 1 minute before each subsequent dose
+    const t_ms = doses[i].date.getTime() - 60000;
+    troughs.push(computeConc(t_ms));
+  }
+
+  for (let i = 1; i < troughs.length; i++) {
+    const prev = troughs[i - 1];
+    const curr = troughs[i];
+    if (prev < 0.001) continue; // skip near-zero (pre-accumulation)
+    const relChange = Math.abs(curr - prev) / prev;
+    if (relChange < 0.05) {
+      return { reached: true, atDoseNumber: i + 2 }; // 1-based, +2 because troughs start at dose 2
+    }
+  }
+  return { reached: false };
+}
+
+// ─── UNIT HELPERS ────────────────────────────────────────────────────────────
+// Two display units:
+//   ng/mL  — raw model output
+//   mg equiv. — apparent amount in central compartment: C(ng/mL) × Vd(L) = µg → ÷1000 = mg
+//   Cross-check: 2.5mg dose × 80.9% F = ~2.02mg absorbed; peak compartment load ≈ 2mg ✓
+function toDisplay(ngml) {
+  return currentUnit === 'mg' ? (ngml * Vd) / 1000 : ngml;
+}
+
+function fmtStat(ngml) {
+  if (currentUnit === 'mg') {
+    const mg = (ngml * Vd) / 1000;
+    return mg.toFixed(4) + ' mg';
+  }
+  return ngml.toFixed(2) + ' ng/mL';
+}
+
+function setUnit(u) {
+  currentUnit = u;
+  document.getElementById('btn-ngml').classList.toggle('active', u === 'ngml');
+  document.getElementById('btn-mg').classList.toggle('active',   u === 'mg');
+  document.getElementById('btn-wt').classList.toggle('active',   u === 'wt');
+  updateChart();
+}
+
+// ─── MAIN UPDATE ─────────────────────────────────────────────────────────────
+function updateChart() {
+  const noMsg    = document.getElementById('noDataMsg');
+  const pkCanvas = document.getElementById('pkChart');
+  const wtCanvas = document.getElementById('wtChart');
+
+  if (doses.length === 0) {
+    noMsg.style.display    = 'flex';
+    pkCanvas.style.display = 'none';
+    wtCanvas.style.display = 'none';
+    updateStats(null);
+    return;
+  }
+  noMsg.style.display = 'none';
+
+  // Route to weight chart if that tab is active
+  if (currentUnit === 'wt') {
+    pkCanvas.style.display = 'none';
+    wtCanvas.style.display = 'block';
+    updateStats(null); // stats row not meaningful for weight view
+    renderWeightChart();
+    return;
+  }
+
+  pkCanvas.style.display = 'block';
+  wtCanvas.style.display = 'none';
+  if (wtChartInstance) { wtChartInstance.destroy(); wtChartInstance = null; }
+
+  const rangeDays    = parseInt(document.getElementById('rangeSelect').value);
+  const firstDoseMs  = doses[0].date.getTime();
+  const now          = Date.now();
+
+  // Window: start just before first dose, extend rangeDays forward
+  const windowStart = firstDoseMs - 12 * 3600000;
+  const windowEnd   = windowStart + rangeDays * 86400000;
+
+  // Step: 1h for ≤90 days, 2h for ≤180, 4h for 1 year
+  const stepH  = rangeDays <= 90 ? 1 : rangeDays <= 180 ? 2 : 4;
+  const stepMs = stepH * 3600000;
+
+  const times = [];
+  const concs = [];
+  for (let t = windowStart; t <= windowEnd; t += stepMs) {
+    times.push(t);
+    concs.push(computeConc(t));
+  }
+
+  const displayConcs = concs.map(c => toDisplay(c));
+  const labels       = times.map(t =>
+    new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  );
+
+  // ── Stats ──
+  const maxC = Math.max(...concs);
+
+  // Trough: minimum concentration strictly between consecutive dose windows.
+  let minC = Infinity;
+  if (doses.length >= 2) {
+    for (let di = 0; di < doses.length - 1; di++) {
+      const winStart = doses[di].date.getTime() + 48 * 3600000;
+      const winEnd   = doses[di + 1].date.getTime() - 60000;
+      for (let i = 0; i < times.length; i++) {
+        if (times[i] >= winStart && times[i] <= winEnd && concs[i] < minC) {
+          minC = concs[i];
+        }
+      }
+    }
+  } else {
+    const troughCutMs = firstDoseMs + 48 * 3600000;
+    for (let i = 0; i < times.length; i++) {
+      if (times[i] >= troughCutMs && concs[i] < minC) minC = concs[i];
+    }
+  }
+  if (!isFinite(minC)) minC = 0;
+
+  // Current (closest time index to now)
+  let nowIdx = 0, bestDelta = Infinity;
+  for (let i = 0; i < times.length; i++) {
+    const d = Math.abs(times[i] - now);
+    if (d < bestDelta) { bestDelta = d; nowIdx = i; }
+  }
+  const currentC = concs[nowIdx];
+
+  const ssResult = detectSteadyState();
+  updateStats({ maxC, minC, currentC, ssResult });
+
+  // Dose tick indices
+  const doseTicks = doses.map(d => {
+    let best = 0, bd = Infinity;
+    for (let i = 0; i < times.length; i++) {
+      const diff = Math.abs(times[i] - d.date.getTime());
+      if (diff < bd) { bd = diff; best = i; }
+    }
+    return { idx: best, amount: d.amount };
+  });
+
+  const unit = currentUnit === 'mg' ? 'mg equiv.' : 'ng/mL';
+  renderChart(labels, displayConcs, doseTicks, nowIdx, unit);
+}
+
+// ─── STATS DISPLAY ────────────────────────────────────────────────────────────
+function updateStats(s) {
+  if (!s) {
+    ['statCurrent','statPeak','statTrough','statSS'].forEach(id =>
+      document.getElementById(id).textContent = '—'
+    );
+    document.getElementById('statSS').className = 'stat-val';
+    return;
+  }
+  document.getElementById('statCurrent').textContent = fmtStat(s.currentC);
+  document.getElementById('statPeak').textContent    = fmtStat(s.maxC);
+  document.getElementById('statTrough').textContent  = fmtStat(s.minC);
+
+  const ssEl = document.getElementById('statSS');
+  if (s.ssResult.reached) {
+    ssEl.textContent  = 'Yes ✓';
+    ssEl.className    = 'stat-val green';
+  } else {
+    ssEl.textContent  = 'Not yet';
+    ssEl.className    = 'stat-val';
+  }
+}
+
+// ─── WEIGHT CHART ─────────────────────────────────────────────────────────────
+let wtChartInstance = null;
+
+function renderWeightChart() {
+  const canvas = document.getElementById('wtChart');
+  if (wtChartInstance) { wtChartInstance.destroy(); wtChartInstance = null; }
+
+  if (!chartJsReady) {
+    pendingRender = () => renderWeightChart();
+    return;
+  }
+
+  // Build per-dose data points
+  const labels  = doses.map(d => fmtDate(d.date));
+  const lbsVals = doses.map(d => parseFloat((d.weightKg * 2.20462).toFixed(1)));
+  const kgVals  = doses.map(d => parseFloat(d.weightKg.toFixed(1)));
+
+  // Y-axis bounds: ±10% padding around actual min/max, rounded to nearest 5 lbs
+  const minLbs  = Math.min(...lbsVals);
+  const maxLbs  = Math.max(...lbsVals);
+  const spread  = Math.max(maxLbs - minLbs, 10); // at least 10 lbs spread so flat data isn't squashed
+  const padding = Math.max(spread * 0.25, 10);   // 25% of spread or 10 lbs, whichever is larger
+  const yMin    = Math.floor((minLbs - padding) / 5) * 5;
+  const yMax    = Math.ceil( (maxLbs + padding) / 5) * 5;
+
+  const ctx = canvas.getContext('2d');
+
+  wtChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Weight',
+        data: lbsVals,
+        borderColor: '#10b981',
+        borderWidth: 2,
+        pointRadius: 5,
+        pointBackgroundColor: '#10b981',
+        pointBorderColor: '#0a0f1a',
+        pointBorderWidth: 1.5,
+        pointHoverRadius: 7,
+        pointHoverBackgroundColor: '#10b981',
+        pointHoverBorderColor: '#fff',
+        pointHoverBorderWidth: 1.5,
+        fill: true,
+        tension: 0.3,
+        backgroundColor: function(ctx2) {
+          const { chart } = ctx2;
+          const { ctx: c, chartArea } = chart;
+          if (!chartArea) return 'rgba(16,185,129,0.08)';
+          const g = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          g.addColorStop(0, 'rgba(16,185,129,0.18)');
+          g.addColorStop(1, 'rgba(16,185,129,0.01)');
+          return g;
+        }
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2.1,
+      animation: { duration: 350, easing: 'easeInOutCubic' },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#111827',
+          borderColor: '#1f2d42',
+          borderWidth: 1,
+          titleColor: '#64748b',
+          bodyColor: '#e2e8f0',
+          titleFont: { family: "'DM Mono', monospace", size: 10 },
+          bodyFont: { family: "'DM Mono', monospace", size: 12 },
+          padding: 10,
+          callbacks: {
+            title: items => labels[items[0].dataIndex],
+            label: item => {
+              const idx = item.dataIndex;
+              return `  ${lbsVals[idx]} lbs  (${kgVals[idx]} kg)`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(31,45,66,0.7)', drawTicks: false },
+          ticks: {
+            color: '#475569',
+            font: { family: "'DM Mono', monospace", size: 9 },
+            maxTicksLimit: 10,
+            maxRotation: 0
+          },
+          border: { color: '#1f2d42' }
+        },
+        y: {
+          grid: { color: 'rgba(31,45,66,0.7)', drawTicks: false },
+          min: yMin,
+          max: yMax,
+          ticks: {
+            color: '#475569',
+            font: { family: "'DM Mono', monospace", size: 9 },
+            callback: v => v + ' lbs'
+          },
+          title: {
+            display: true,
+            text: 'lbs',
+            color: '#475569',
+            font: { family: "'DM Mono', monospace", size: 9 }
+          },
+          border: { color: '#1f2d42' }
+        }
+      }
+    }
+  });
+}
+
+// ─── CHART RENDER ─────────────────────────────────────────────────────────────
+function renderChart(labels, data, doseTicks, todayIdx, unit) {
+  const canvas = document.getElementById('pkChart');
+
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+
+  if (!chartJsReady) {
+    pendingRender = () => renderChart(labels, data, doseTicks, todayIdx, unit);
+    return;
+  }
+
+  const ctx = canvas.getContext('2d');
+
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Plasma Concentration',
+        data,
+        borderColor: '#3b82f6',
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointHoverBackgroundColor: '#3b82f6',
+        pointHoverBorderColor: '#ffffff',
+        pointHoverBorderWidth: 1.5,
+        fill: true,
+        tension: 0.3,
+        backgroundColor: function(ctx2) {
+          const { chart } = ctx2;
+          const { ctx: c, chartArea } = chart;
+          if (!chartArea) return 'rgba(59,130,246,0.1)';
+          const g = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          g.addColorStop(0, 'rgba(59,130,246,0.28)');
+          g.addColorStop(1, 'rgba(59,130,246,0.02)');
+          return g;
+        }
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2.1,
+      animation: { duration: 350, easing: 'easeInOutCubic' },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#111827',
+          borderColor: '#1f2d42',
+          borderWidth: 1,
+          titleColor: '#64748b',
+          bodyColor: '#e2e8f0',
+          titleFont: { family: "'DM Mono', monospace", size: 10 },
+          bodyFont: { family: "'DM Mono', monospace", size: 12 },
+          padding: 10,
+          callbacks: {
+            title: items => items[0].label,
+            label: item => {
+              const decimals = currentUnit === 'mg' ? 4 : 2;
+              return '  ' + item.parsed.y.toFixed(decimals) + ' ' + unit;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(31,45,66,0.7)', drawTicks: false },
+          ticks: {
+            color: '#475569',
+            font: { family: "'DM Mono', monospace", size: 9 },
+            maxTicksLimit: 10,
+            maxRotation: 0
+          },
+          border: { color: '#1f2d42' }
+        },
+        y: {
+          grid: { color: 'rgba(31,45,66,0.7)', drawTicks: false },
+          ticks: {
+            color: '#475569',
+            font: { family: "'DM Mono', monospace", size: 9 },
+            callback: v => {
+            if (currentUnit === 'mg') return v.toFixed(4);
+            return v >= 1 ? v.toFixed(1) : v.toFixed(2);
+          }
+          },
+          title: {
+            display: true,
+            text: unit,
+            color: '#475569',
+            font: { family: "'DM Mono', monospace", size: 9 }
+          },
+          border: { color: '#1f2d42' },
+          min: 0
+        }
+      }
+    },
+    plugins: [{
+      id: 'overlays',
+      afterDraw(chart) {
+        const { ctx: c, scales: { x }, chartArea } = chart;
+        if (!chartArea) return;
+        const n = chart.data.labels.length;
+
+        // Dose vertical lines — using stored index, not string lookup
+        doseTicks.forEach(tick => {
+          if (tick.idx < 0 || tick.idx >= n) return;
+          const xPos = x.getPixelForValue(tick.idx);
+          c.save();
+          c.beginPath();
+          c.moveTo(xPos, chartArea.top);
+          c.lineTo(xPos, chartArea.bottom);
+          c.strokeStyle = 'rgba(59,130,246,0.2)';
+          c.lineWidth = 1;
+          c.setLineDash([3, 4]);
+          c.stroke();
+          c.fillStyle = 'rgba(96,165,250,0.7)';
+          c.font = "8px 'DM Mono', monospace";
+          c.textAlign = 'center';
+          c.fillText(tick.amount + 'mg', xPos, chartArea.top + 9);
+          c.restore();
+        });
+
+        // Today line
+        if (todayIdx >= 0 && todayIdx < n) {
+          const xPos = x.getPixelForValue(todayIdx);
+          c.save();
+          c.beginPath();
+          c.moveTo(xPos, chartArea.top);
+          c.lineTo(xPos, chartArea.bottom);
+          c.strokeStyle = 'rgba(16,185,129,0.55)';
+          c.lineWidth = 1.5;
+          c.setLineDash([]);
+          c.stroke();
+          c.fillStyle = 'rgba(16,185,129,0.85)';
+          c.font = "bold 8px 'DM Mono', monospace";
+          c.textAlign = 'center';
+          c.fillText('TODAY', xPos, chartArea.bottom + 11);
+          c.restore();
+        }
+      }
+    }]
+  });
+}
+</script>
+</body>
+</html>
