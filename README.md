@@ -4,6 +4,8 @@ A standalone, client-side pharmacokinetic (PK) modeling tool for visualizing est
 
 > ⚠️ **For educational and informational use only.** This tool does not constitute medical advice. Individual pharmacokinetics vary substantially. Never adjust your dosing based on this model without consulting your prescribing physician.
 
+<img width="1251" height="826" alt="tirzplot_ss" src="https://github.com/user-attachments/assets/94849374-1a68-4cc7-af02-c4334b0ca7ce" />
+
 ---
 
 ## Background
