@@ -338,6 +338,59 @@
   .pk-key { font-size: 10px; color: var(--text-muted); margin-bottom: 2px; }
   .pk-val { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent2); }
 
+  .donate-section {
+    margin-top: 16px;
+    padding: 32px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+  }
+  .donate-heart {
+    font-size: 28px;
+    line-height: 1;
+    color: #ef4444;
+    filter: drop-shadow(0 0 8px rgba(239,68,68,0.4));
+    animation: heartbeat 2s ease-in-out infinite;
+  }
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    15%       { transform: scale(1.18); }
+    30%       { transform: scale(1); }
+    45%       { transform: scale(1.1); }
+    60%       { transform: scale(1); }
+  }
+  .donate-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.2px;
+  }
+  .donate-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    max-width: 420px;
+    line-height: 1.6;
+  }
+  .donate-buttons {
+    margin-top: 6px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+  }
+  .donate-thanks {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    margin-top: 4px;
+  }
+
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -525,6 +578,36 @@
       <div><div class="pk-key">Steady state (once-weekly)</div><div class="pk-val">~4 weeks</div></div>
       <div><div class="pk-key">Dose proportionality</div><div class="pk-val">Linear 0.25–15 mg</div></div>
     </div>
+  </div>
+
+  <!-- DONATION SECTION -->
+  <div class="donate-section">
+    <div class="donate-heart">♥</div>
+    <div class="donate-title">Support This Project</div>
+    <div class="donate-label">If you find this tool useful, please consider making a small donation. It helps keep the project going and free for everyone.</div>
+    <div class="donate-buttons">
+      <div id="donate-button-container">
+        <div id="donate-button"></div>
+        <script src="https://www.paypalobjects.com/donate/sdk/donate-sdk.js"
+          charset="UTF-8"
+          data-onload="initPayPal">
+        </script>
+        <script>
+          function initPayPal() {
+            PayPal.Donation.Button({
+              env:'production',
+              hosted_button_id:'CN5YDW2KWLS2Y',
+              image: {
+                src:'https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif',
+                alt:'Donate with PayPal button',
+                title:'PayPal - The safer, easier way to pay online!',
+              }
+          }).render('#donate-button');
+          }
+        </script>
+      </div>
+    </div>
+    <div class="donate-thanks">Thank you for your support 🙏</div>
   </div>
 
 </div><!-- /container -->
