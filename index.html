@@ -391,131 +391,6 @@
     margin-top: 4px;
   }
 
-  /* ── MODAL ── */
-  .modal-overlay {
-    display: none;
-    position: fixed; inset: 0; z-index: 1000;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    width: 100%;
-    max-width: 760px;
-    max-height: 85vh;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
-    animation: modalIn 0.2s ease-out;
-  }
-  @keyframes modalIn {
-    from { opacity: 0; transform: translateY(12px) scale(0.98); }
-    to   { opacity: 1; transform: translateY(0)   scale(1); }
-  }
-  .modal-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 18px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .modal-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--text-dim);
-    display: flex; align-items: center; gap: 8px;
-  }
-  .modal-title::before {
-    content: ''; width: 6px; height: 6px; border-radius: 50%;
-    background: var(--accent); box-shadow: 0 0 6px var(--accent);
-  }
-  .modal-close {
-    background: none; border: none; cursor: pointer;
-    color: var(--text-muted); font-size: 18px; line-height: 1;
-    padding: 2px 6px; border-radius: 4px;
-    transition: color 0.15s, background 0.15s;
-  }
-  .modal-close:hover { color: var(--text); background: var(--surface2); }
-  .modal-body {
-    padding: 24px 28px;
-    overflow-y: auto;
-    flex: 1;
-    font-size: 13px;
-    line-height: 1.7;
-    color: var(--text-dim);
-  }
-  .modal-body::-webkit-scrollbar { width: 5px; }
-  .modal-body::-webkit-scrollbar-track { background: transparent; }
-  .modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-  /* Markdown rendered styles */
-  .modal-body h1 { font-size: 18px; font-weight: 500; color: var(--text); margin: 0 0 16px; letter-spacing: -0.3px; }
-  .modal-body h2 { font-size: 14px; font-weight: 500; color: var(--text); margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
-  .modal-body h3 { font-size: 12px; font-weight: 500; color: var(--accent2); margin: 18px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
-  .modal-body p { margin: 0 0 12px; }
-  .modal-body a { color: var(--accent2); text-decoration: none; }
-  .modal-body a:hover { text-decoration: underline; }
-  .modal-body code {
-    font-family: 'DM Mono', monospace; font-size: 11px;
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 3px; padding: 1px 5px; color: var(--accent2);
-  }
-  .modal-body pre {
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: 14px 16px;
-    overflow-x: auto; margin: 0 0 14px;
-  }
-  .modal-body pre code {
-    background: none; border: none; padding: 0;
-    font-size: 11px; color: var(--text-dim);
-  }
-  .modal-body table {
-    width: 100%; border-collapse: collapse; margin: 0 0 14px; font-size: 12px;
-  }
-  .modal-body th {
-    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.06em;
-    text-transform: uppercase; color: var(--text-muted);
-    border-bottom: 1px solid var(--border); padding: 6px 10px; text-align: left;
-  }
-  .modal-body td { padding: 7px 10px; border-bottom: 1px solid rgba(31,45,66,0.5); }
-  .modal-body tr:last-child td { border-bottom: none; }
-  .modal-body ul, .modal-body ol { padding-left: 20px; margin: 0 0 12px; }
-  .modal-body li { margin-bottom: 4px; }
-  .modal-body hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
-  .modal-body blockquote {
-    border-left: 3px solid var(--accent); margin: 0 0 14px;
-    padding: 4px 0 4px 14px; color: var(--text-muted); font-style: italic;
-  }
-  /* Plain text (LICENSE) */
-  .modal-plain {
-    font-family: 'DM Mono', monospace; font-size: 11px;
-    line-height: 1.8; color: var(--text-dim); white-space: pre-wrap;
-  }
-  .modal-error {
-    font-family: 'DM Mono', monospace; font-size: 11px;
-    color: var(--warn); padding: 20px 0;
-  }
-  /* Footer links */
-  .header-links {
-    display: flex; gap: 12px; margin-top: 10px;
-  }
-  .header-link {
-    font-family: 'DM Mono', monospace; font-size: 10px;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--text-muted); cursor: pointer;
-    background: none; border: none; padding: 0;
-    display: flex; align-items: center; gap: 5px;
-    transition: color 0.15s;
-  }
-  .header-link:hover { color: var(--accent2); }
-  .header-link svg { opacity: 0.6; }
-  .header-link:hover svg { opacity: 1; }
-
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -528,30 +403,7 @@
     <h1>Plasma Concentration Estimator</h1>
     <p>One-compartment PK model with first-order absorption &amp; elimination. Parameters from FDA NDA 215866 Clinical Pharmacology Review (Eli Lilly, 2022). Body weight is recorded per injection for accurate longitudinal PK scaling.</p>
     <div class="disclaimer">⚠ <strong>For educational/informational use only.</strong> This tool does not constitute medical advice. Individual PK varies substantially (FDA-reported CV ~22% for Cmax/AUC). Never adjust your dosing based on this model without consulting your prescribing physician.</div>
-    <div class="header-links">
-      <button class="header-link" onclick="openModal('readme')">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        README
-      </button>
-      <button class="header-link" onclick="openModal('license')">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        LICENSE
-      </button>
-    </div>
   </header>
-
-  <!-- MODAL -->
-  <div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
-    <div class="modal">
-      <div class="modal-header">
-        <div class="modal-title" id="modalTitle">README</div>
-        <button class="modal-close" onclick="closeModal()" title="Close">✕</button>
-      </div>
-      <div class="modal-body" id="modalBody">
-        <div class="modal-error">Loading…</div>
-      </div>
-    </div>
-  </div>
 
   <div class="layout">
     <!-- LEFT PANEL -->
@@ -1113,6 +965,29 @@ function setUnit(u) {
   updateChart();
 }
 
+// ─── AUTO RANGE ───────────────────────────────────────────────────────────────
+// Range tiers in days — must match the <option> values in rangeSelect
+const RANGE_TIERS = [30, 60, 90, 180, 365];
+
+function autoRange() {
+  if (doses.length < 2) return;
+  const firstDoseMs = doses[0].date.getTime();
+  const lastDoseMs  = doses[doses.length - 1].date.getTime();
+  // Add 14 days of forward padding so the last dose has a visible tail
+  const spanDays = (lastDoseMs - firstDoseMs) / 86400000 + 14;
+
+  const select      = document.getElementById('rangeSelect');
+  const currentVal  = parseInt(select.value);
+
+  // Find the smallest tier that fits the data span
+  const needed = RANGE_TIERS.find(t => t >= spanDays) || RANGE_TIERS[RANGE_TIERS.length - 1];
+
+  // Only expand — never shrink the user's selection
+  if (needed > currentVal) {
+    select.value = needed;
+  }
+}
+
 // ─── MAIN UPDATE ─────────────────────────────────────────────────────────────
 function updateChart() {
   const noMsg    = document.getElementById('noDataMsg');
@@ -1127,8 +1002,7 @@ function updateChart() {
     return;
   }
   noMsg.style.display = 'none';
-
-  // Route to weight chart if that tab is active
+  autoRange();
   if (currentUnit === 'wt') {
     pkCanvas.style.display = 'none';
     wtCanvas.style.display = 'block';
@@ -1496,91 +1370,6 @@ function renderChart(labels, data, doseTicks, todayIdx, unit) {
       }
     }]
   });
-}
-</script>
-
-<!-- marked.js for Markdown rendering -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
-
-<script>
-// ─── MODAL ────────────────────────────────────────────────────────────────────
-const MODAL_FILES = {
-  readme:  './README.md',
-  license: './LICENSE'
-};
-
-// Simple cache so repeated opens don't re-fetch
-const modalCache = {};
-
-function openModal(type) {
-  const overlay = document.getElementById('modalOverlay');
-  const title   = document.getElementById('modalTitle');
-  const body    = document.getElementById('modalBody');
-
-  title.textContent = type === 'readme' ? 'README.md' : 'LICENSE';
-  body.innerHTML    = '<div class="modal-error">Loading…</div>';
-  overlay.classList.add('open');
-  document.body.style.overflow = 'hidden';
-
-  if (modalCache[type]) {
-    renderModal(type, modalCache[type]);
-    return;
-  }
-
-  fetch(MODAL_FILES[type])
-    .then(r => {
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r.text();
-    })
-    .then(text => {
-      modalCache[type] = text;
-      renderModal(type, text);
-    })
-    .catch(err => {
-      body.innerHTML = `<div class="modal-error">
-        Could not load ${MODAL_FILES[type]}.<br><br>
-        Make sure the file is deployed alongside index.html on Netlify.<br>
-        <small style="opacity:0.6;">${err.message}</small>
-      </div>`;
-    });
-}
-
-function renderModal(type, text) {
-  const body = document.getElementById('modalBody');
-  if (type === 'readme') {
-    // Render Markdown — fall back to plain text if marked.js not loaded
-    if (typeof marked !== 'undefined') {
-      marked.setOptions({ breaks: true, gfm: true });
-      body.innerHTML = marked.parse(text);
-    } else {
-      body.innerHTML = `<pre class="modal-plain">${escapeHtml(text)}</pre>`;
-    }
-  } else {
-    // LICENSE — always plain preformatted text
-    body.innerHTML = `<pre class="modal-plain">${escapeHtml(text)}</pre>`;
-  }
-}
-
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-function handleOverlayClick(e) {
-  // Close if clicking the backdrop, not the modal itself
-  if (e.target === document.getElementById('modalOverlay')) closeModal();
-}
-
-// Close on Escape key
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
-});
-
-function escapeHtml(str) {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
 }
 </script>
 </body>
