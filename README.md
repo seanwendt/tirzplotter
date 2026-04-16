@@ -88,13 +88,21 @@ This reflects the FDA-reported finding that a 70 kg patient has ~23% higher AUC,
 
 ## Usage
 
-1. Download `tirzepatide_pk_plotter.html`
-2. Open it in any modern browser (Chrome recommended; see Storage Notes below)
-3. Enter a date, dose amount, and your body weight at the time of injection
-4. Click **+ Add Injection**
-5. Repeat for each injection in your schedule
-6. Use the **ng/mL / mg equiv. / Weight** tabs to switch chart views
-7. Use **Export** to download a JSON backup of your data
+The tool is hosted and ready to use — no installation required. Simply open it in any modern browser.
+
+If you prefer to self-host or run it locally:
+
+1. Clone or download the repository
+2. Deploy `index.html`, `README.md`, and `LICENSE` to any static host (Netlify, GitHub Pages, etc.)
+3. Or open `index.html` directly in Chrome from your local filesystem
+
+Once open:
+
+1. Enter a date, dose amount, and your body weight at the time of injection
+2. Click **+ Add Injection**
+3. Repeat for each injection in your schedule
+4. Use the **ng/mL / mg equiv. / Weight** tabs to switch chart views
+5. Use **Export** to download a JSON backup of your data
 
 ### Data Persistence
 
@@ -103,8 +111,10 @@ This reflects the FDA-reported finding that a 70 kg patient has ~23% higher AUC,
 | Chrome | ✅ Supported | Recommended |
 | Firefox | ✅ Supported | Works normally |
 | Edge | ✅ Supported | Works normally |
-| Safari (file://) | ⚠️ Restricted | Use Export/Import instead |
+| Safari | ✅ Supported | Works normally when hosted |
 | Private/Incognito | ⚠️ Session only | Data lost on close; export before closing |
+
+> **Note:** If running from a local `file://` path rather than a hosted URL, Safari may restrict localStorage. Use the **Export** button to save your data in that case.
 
 The storage status indicator in the Injection Schedule panel shows whether auto-save is active. If it shows an amber warning, use the **Export** button to save your data before closing.
 
@@ -133,9 +143,17 @@ All loaded from CDN — no local installation required.
 | Library | Version | Purpose |
 |---|---|---|
 | [Chart.js](https://www.chartjs.org/) | 4.4.1 | Chart rendering |
+| [marked.js](https://marked.js.org/) | 9.1.6 | README Markdown rendering |
 | [Google Fonts](https://fonts.google.com/) | — | DM Sans, DM Mono typefaces |
 
-The tool will function without internet access if both resources are already cached by the browser.
+## Repository Structure
+
+```
+tirzepatide-pk-plotter/
+├── index.html       ← main application
+├── README.md
+└── LICENSE
+```
 
 ---
 
