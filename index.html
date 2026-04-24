@@ -391,6 +391,128 @@
     margin-top: 4px;
   }
 
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 760px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    animation: modalIn 0.2s ease-out;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .modal-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-dim);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .modal-title::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 6px var(--accent);
+  }
+  .modal-close {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 18px; line-height: 1;
+    padding: 2px 6px; border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .modal-close:hover { color: var(--text); background: var(--surface2); }
+  .modal-body {
+    padding: 24px 28px;
+    overflow-y: auto;
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-dim);
+  }
+  .modal-body::-webkit-scrollbar { width: 5px; }
+  .modal-body::-webkit-scrollbar-track { background: transparent; }
+  .modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .modal-body h1 { font-size: 18px; font-weight: 500; color: var(--text); margin: 0 0 16px; letter-spacing: -0.3px; }
+  .modal-body h2 { font-size: 14px; font-weight: 500; color: var(--text); margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .modal-body h3 { font-size: 12px; font-weight: 500; color: var(--accent2); margin: 18px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .modal-body p { margin: 0 0 12px; }
+  .modal-body a { color: var(--accent2); text-decoration: none; }
+  .modal-body a:hover { text-decoration: underline; }
+  .modal-body code {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 3px; padding: 1px 5px; color: var(--accent2);
+  }
+  .modal-body pre {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px 16px;
+    overflow-x: auto; margin: 0 0 14px;
+  }
+  .modal-body pre code {
+    background: none; border: none; padding: 0;
+    font-size: 11px; color: var(--text-dim);
+  }
+  .modal-body table {
+    width: 100%; border-collapse: collapse; margin: 0 0 14px; font-size: 12px;
+  }
+  .modal-body th {
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--text-muted);
+    border-bottom: 1px solid var(--border); padding: 6px 10px; text-align: left;
+  }
+  .modal-body td { padding: 7px 10px; border-bottom: 1px solid rgba(31,45,66,0.5); }
+  .modal-body tr:last-child td { border-bottom: none; }
+  .modal-body ul, .modal-body ol { padding-left: 20px; margin: 0 0 12px; }
+  .modal-body li { margin-bottom: 4px; }
+  .modal-body hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  .modal-body blockquote {
+    border-left: 3px solid var(--accent); margin: 0 0 14px;
+    padding: 4px 0 4px 14px; color: var(--text-muted); font-style: italic;
+  }
+  .modal-plain {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    line-height: 1.8; color: var(--text-dim); white-space: pre-wrap;
+  }
+  .modal-error {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: var(--warn); padding: 20px 0;
+  }
+  .header-links {
+    display: flex; gap: 12px; margin-top: 10px;
+  }
+  .header-link {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-muted); cursor: pointer;
+    background: none; border: none; padding: 0;
+    display: flex; align-items: center; gap: 5px;
+    transition: color 0.15s;
+  }
+  .header-link:hover { color: var(--accent2); }
+  .header-link svg { opacity: 0.6; }
+  .header-link:hover svg { opacity: 1; }
+
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -403,7 +525,29 @@
     <h1>Plasma Concentration Estimator</h1>
     <p>One-compartment PK model with first-order absorption &amp; elimination. Parameters from FDA NDA 215866 Clinical Pharmacology Review (Eli Lilly, 2022). Body weight is recorded per injection for accurate longitudinal PK scaling.</p>
     <div class="disclaimer">⚠ <strong>For educational/informational use only.</strong> This tool does not constitute medical advice. Individual PK varies substantially (FDA-reported CV ~22% for Cmax/AUC). Never adjust your dosing based on this model without consulting your prescribing physician.</div>
+    <div class="header-links">
+      <button class="header-link" onclick="openModal('readme')">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        README
+      </button>
+      <button class="header-link" onclick="openModal('license')">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        LICENSE
+      </button>
+    </div>
   </header>
+
+  <div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">README</div>
+        <button class="modal-close" onclick="closeModal()" title="Close">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <div class="modal-error">Loading…</div>
+      </div>
+    </div>
+  </div>
 
   <div class="layout">
     <!-- LEFT PANEL -->
@@ -730,13 +874,19 @@ function importJSON(event) {
     try {
       const payload = JSON.parse(e.target.result);
       if (!Array.isArray(payload)) throw new Error('Expected an array');
-      const imported = payload.map(d => {
+      const imported = payload.map((d, idx) => {
         if (!d.dateISO || d.amount == null || d.weightKg == null) throw new Error('Missing fields');
-        return {
-          date:     new Date(d.dateISO),
-          amount:   parseFloat(d.amount),
-          weightKg: parseFloat(d.weightKg)
-        };
+        const date = new Date(d.dateISO);
+        const amount = parseFloat(d.amount);
+        const weightKg = parseFloat(d.weightKg);
+        if (Number.isNaN(date.getTime())) throw new Error(`Invalid date in record ${idx + 1}`);
+        if (!Number.isFinite(amount) || amount < 0.5 || amount > 15) {
+          throw new Error(`Dose in record ${idx + 1} must be between 0.5 and 15 mg`);
+        }
+        if (!Number.isFinite(weightKg) || weightKg < 30 || weightKg > 300) {
+          throw new Error(`Weight in record ${idx + 1} must be between 30 and 300 kg`);
+        }
+        return { date, amount, weightKg };
       });
       // Confirm if data already exists
       if (doses.length > 0) {
@@ -770,7 +920,7 @@ document.addEventListener('DOMContentLoaded', () => {
   detectStorage();
   updateStorageUI();
 
-  document.getElementById('doseDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('doseDate').value = formatDateInputValue(new Date());
   updateWeightHint();
 
   document.getElementById('weightLbs').addEventListener('input', function() {
@@ -787,6 +937,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load persisted data after Chart.js is ready
   loadPersistedDoses();
 });
+
+function formatDateInputValue(d) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 function getFormWeightKg() {
   return Math.max(30, parseFloat(document.getElementById('weightKg').value) || 90);
@@ -825,7 +982,7 @@ function addDose() {
   const increment = Math.max(1, parseInt(document.getElementById('dayIncrement').value) || 7);
   const next = new Date(date);
   next.setDate(next.getDate() + increment);
-  document.getElementById('doseDate').value = next.toISOString().split('T')[0];
+  document.getElementById('doseDate').value = formatDateInputValue(next);
 }
 
 function removeDose(idx) {
@@ -858,6 +1015,7 @@ function fillExample() {
     const wLbs = startWeightLbs - i * 1.2; // ~1.2 lb/week loss
     doses.push({ date: d, amount: i < 4 ? 2.5 : 5, weightKg: wLbs / 2.20462 });
   }
+  persistDoses();
   renderDoseList();
   updateChart();
 }
@@ -1062,13 +1220,16 @@ function updateChart() {
   }
   if (!isFinite(minC)) minC = 0;
 
-  // Current (closest time index to now)
-  let nowIdx = 0, bestDelta = Infinity;
-  for (let i = 0; i < times.length; i++) {
-    const d = Math.abs(times[i] - now);
-    if (d < bestDelta) { bestDelta = d; nowIdx = i; }
+  // Current should reflect the real current time even if today is outside the visible chart window.
+  const currentC = computeConc(now);
+  let nowIdx = -1;
+  if (now >= windowStart && now <= windowEnd) {
+    let bestDelta = Infinity;
+    for (let i = 0; i < times.length; i++) {
+      const d = Math.abs(times[i] - now);
+      if (d < bestDelta) { bestDelta = d; nowIdx = i; }
+    }
   }
-  const currentC = concs[nowIdx];
 
   const ssResult = detectSteadyState();
   updateStats({ maxC, minC, currentC, ssResult });
@@ -1122,10 +1283,18 @@ function renderWeightChart() {
     return;
   }
 
-  // Build per-dose data points
-  const labels  = doses.map(d => fmtDate(d.date));
-  const lbsVals = doses.map(d => parseFloat((d.weightKg * 2.20462).toFixed(1)));
-  const kgVals  = doses.map(d => parseFloat(d.weightKg.toFixed(1)));
+  // Build per-dose data points using timestamps so spacing reflects elapsed time.
+  const points = doses.map(d => ({
+    x: d.date.getTime(),
+    y: parseFloat((d.weightKg * 2.20462).toFixed(1)),
+    kg: parseFloat(d.weightKg.toFixed(1))
+  }));
+  const lbsVals = points.map(p => p.y);
+  const firstTs = points[0].x;
+  const lastTs = points[points.length - 1].x;
+  const singlePointPaddingMs = 3 * 86400000;
+  const xMin = firstTs === lastTs ? firstTs - singlePointPaddingMs : firstTs;
+  const xMax = firstTs === lastTs ? lastTs + singlePointPaddingMs : lastTs;
 
   // Y-axis bounds: ±10% padding around actual min/max, rounded to nearest 5 lbs
   const minLbs  = Math.min(...lbsVals);
@@ -1140,10 +1309,9 @@ function renderWeightChart() {
   wtChartInstance = new Chart(ctx, {
     type: 'line',
     data: {
-      labels,
       datasets: [{
         label: 'Weight',
-        data: lbsVals,
+        data: points,
         borderColor: '#10b981',
         borderWidth: 2,
         pointRadius: 5,
@@ -1185,22 +1353,23 @@ function renderWeightChart() {
           bodyFont: { family: "'DM Mono', monospace", size: 12 },
           padding: 10,
           callbacks: {
-            title: items => labels[items[0].dataIndex],
-            label: item => {
-              const idx = item.dataIndex;
-              return `  ${lbsVals[idx]} lbs  (${kgVals[idx]} kg)`;
-            }
+            title: items => fmtDate(new Date(items[0].raw.x)),
+            label: item => `  ${item.raw.y} lbs  (${item.raw.kg} kg)`
           }
         }
       },
       scales: {
         x: {
+          type: 'linear',
           grid: { color: 'rgba(31,45,66,0.7)', drawTicks: false },
+          min: xMin,
+          max: xMax,
           ticks: {
             color: '#475569',
             font: { family: "'DM Mono', monospace", size: 9 },
             maxTicksLimit: 10,
-            maxRotation: 0
+            maxRotation: 0,
+            callback: v => fmtDate(new Date(v))
           },
           border: { color: '#1f2d42' }
         },
@@ -1370,6 +1539,82 @@ function renderChart(labels, data, doseTicks, todayIdx, unit) {
       }
     }]
   });
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<script>
+const MODAL_FILES = {
+  readme: './README.md',
+  license: './LICENSE'
+};
+
+const modalCache = {};
+
+function openModal(type) {
+  const overlay = document.getElementById('modalOverlay');
+  const title = document.getElementById('modalTitle');
+  const body = document.getElementById('modalBody');
+
+  title.textContent = type === 'readme' ? 'README.md' : 'LICENSE';
+  body.innerHTML = '<div class="modal-error">Loading…</div>';
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  if (modalCache[type]) {
+    renderModal(type, modalCache[type]);
+    return;
+  }
+
+  fetch(MODAL_FILES[type])
+    .then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.text();
+    })
+    .then(text => {
+      modalCache[type] = text;
+      renderModal(type, text);
+    })
+    .catch(err => {
+      body.innerHTML = `<div class="modal-error">
+        Could not load ${MODAL_FILES[type]}.<br><br>
+        Make sure the file is deployed alongside index.html.<br>
+        <small style="opacity:0.6;">${escapeHtml(err.message)}</small>
+      </div>`;
+    });
+}
+
+function renderModal(type, text) {
+  const body = document.getElementById('modalBody');
+  if (type === 'readme') {
+    if (typeof marked !== 'undefined') {
+      marked.setOptions({ breaks: true, gfm: true });
+      body.innerHTML = marked.parse(text);
+    } else {
+      body.innerHTML = `<pre class="modal-plain">${escapeHtml(text)}</pre>`;
+    }
+  } else {
+    body.innerHTML = `<pre class="modal-plain">${escapeHtml(text)}</pre>`;
+  }
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 </script>
 </body>
