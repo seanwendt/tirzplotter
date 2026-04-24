@@ -690,7 +690,7 @@
           <div class="stat-label">Peak (C<sub style="font-size:7px;vertical-align:sub;">max</sub>) <span class="info-icon">i</span></div>
           <div class="stat-tooltip">
             <strong>Peak Concentration (Cmax)</strong>
-            The highest plasma concentration in the displayed window. Tirzepatide typically peaks 24–72 hours post-injection (tmax). With repeated weekly dosing, peaks increase due to drug accumulation — reaching ~1.7× the first-dose peak at steady state, per FDA accumulation ratio data.
+            The highest plasma concentration in the displayed window. Tirzepatide typically peaks 8–72 hours post-injection (tmax). This model uses a rate constant that places tmax around 48 hours within that range. With repeated weekly dosing, peaks increase due to drug accumulation — FDA labeling describes an AUC accumulation ratio of about 1.6× by four weeks.
           </div>
           <div class="stat-val green" id="statPeak">—</div>
         </div>
@@ -721,12 +721,12 @@
     <div class="pk-info-title">PK Parameters — Source: FDA NDA 215866 (Eli Lilly, 2022) · One-compartment model</div>
     <div class="pk-grid">
       <div><div class="pk-key">Elimination half-life (t½)</div><div class="pk-val">~5 days (120 h)</div></div>
-      <div><div class="pk-key">Absorption tmax range (SC)</div><div class="pk-val">24–72 h</div></div>
+      <div><div class="pk-key">Absorption tmax range (SC)</div><div class="pk-val">8–72 h</div></div>
       <div><div class="pk-key">Bioavailability (F)</div><div class="pk-val">80.9%</div></div>
       <div><div class="pk-key">Clearance (CL/F)</div><div class="pk-val">0.061 L/h</div></div>
       <div><div class="pk-key">Volume of distribution (Vd)</div><div class="pk-val">10.3 L</div></div>
       <div><div class="pk-key">Plasma protein binding</div><div class="pk-val">99% (albumin)</div></div>
-      <div><div class="pk-key">Accumulation ratio (QW)</div><div class="pk-val">~1.7×</div></div>
+      <div><div class="pk-key">Accumulation ratio (QW)</div><div class="pk-val">~1.6× by 4 wk</div></div>
       <div><div class="pk-key">Steady state (once-weekly)</div><div class="pk-val">~4 weeks</div></div>
       <div><div class="pk-key">Dose proportionality</div><div class="pk-val">Linear 0.25–15 mg</div></div>
     </div>
@@ -770,7 +770,7 @@
 const F = 0.809;       // subcutaneous bioavailability
 const CL = 0.061;      // population mean clearance (L/h)
 const Vd = 10.3;       // apparent volume of distribution (L)
-const ka = 0.0695;     // absorption rate constant (h^-1), chosen for tmax near 48h
+const ka = 0.0695;     // absorption rate constant (h^-1), chosen for tmax near 48h within FDA's 8-72h range
 
 // Body weight scaling from the FDA population PK model.
 // Lower body weight increases exposure; higher body weight decreases exposure.

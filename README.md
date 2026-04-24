@@ -1,6 +1,6 @@
 # Tirzepatide Plasma Concentration Plotter
 
-A standalone, client-side pharmacokinetic (PK) modeling tool for visualizing estimated tirzepatide plasma concentrations over time. Built as a single HTML file — no server, no build step, no dependencies to install.
+A standalone, client-side pharmacokinetic (PK) modeling tool for visualizing estimated tirzepatide plasma concentrations over time. Built as a single HTML app — no server, no build step, no dependencies to install.
 
 > ⚠️ **For educational and informational use only.** This tool does not constitute medical advice. Individual pharmacokinetics vary substantially. Never adjust your dosing based on this model without consulting your prescribing physician.
 
@@ -25,28 +25,28 @@ This tool models that behavior using a **one-compartment pharmacokinetic model w
   - `mg equiv.` — estimated total drug in the central compartment (C × Vd)
   - `Weight` — body weight over time, one point per injection
 - **Configurable time range** — 30 days to 1 year
-- **Steady state detection** — computed from the simulated curve (trough-to-trough variance < 5%), not a fixed heuristic
+- **Steady state detection** — computed from consecutive pre-dose trough estimates (relative change < 5%), not a fixed heuristic
 - **Key statistics** — current estimated concentration, Cmax, Cmin (trough), and steady state status, each with explanatory tooltips
-- **Dose markers and TODAY line** overlaid on the chart
+- **Dose markers and TODAY line** overlaid on the PK chart when they fall inside the visible date range
 - **Persistent storage** — auto-saves to `localStorage` on every change; status indicator shows whether browser storage is available
 - **Export / Import** — download your data as a portable JSON backup; import it on any browser or machine
-- **Fully offline** after initial load (requires internet only for Google Fonts and Chart.js CDN on first open)
+- **Static hosting friendly** — works without a backend; CDN assets are used for charts, fonts, README rendering, and the donation button
 
 ---
 
 ## PK Model
 
-All parameters are sourced from the FDA NDA 215866 Clinical Pharmacology Review (Eli Lilly, 2022).
+Model inputs are sourced from FDA tirzepatide review and labeling documents, with `ka` derived to place the model tmax around 48 hours within the reported 8–72 hour range.
 
 | Parameter | Value | Source |
 |---|---|---|
 | Elimination half-life (t½) | ~5 days (120 h) | Table 1, NDA 215866 |
-| Absorption tmax range (SC) | 24–72 h | Tables 3–4, NDA 215866 |
+| Absorption tmax range (SC) | 8–72 h | FDA labeling |
 | Bioavailability (F) | 80.9% | Study GPGE Part D |
 | Clearance (CL/F) | 0.061 L/h | Table 1, NDA 215866 |
 | Volume of distribution (Vd) | 10.3 L | Table 1, NDA 215866 |
 | Plasma protein binding | 99% (albumin) | Section 3.2 |
-| Accumulation ratio (QW) | ~1.7× | Section 3.2 |
+| Accumulation ratio (QW, AUC0-tau) | ~1.6× by 4 weeks | FDA labeling / review summary |
 | Steady state (once-weekly) | ~4 weeks | Table 1, NDA 215866 |
 | Dose proportionality | Linear 0.25–15 mg | popPK analysis |
 
@@ -60,7 +60,7 @@ C(t) = (F · D / Vd) · (ka / (ka − ke)) · (e^(−ke·t) − e^(−ka·t))
 
 Where:
 - `D` = dose in mg
-- `ka` = absorption rate constant (0.0695 h⁻¹, derived to reproduce tmax ≈ 48 h)
+- `ka` = absorption rate constant (0.0695 h⁻¹, derived to reproduce tmax ≈ 48 h within the reported 8–72 h range)
 - `ke` = elimination rate constant = CL / Vd
 - `t` = time since injection in hours
 
@@ -94,7 +94,7 @@ If you prefer to self-host or run it locally:
 
 1. Clone or download the repository
 2. Deploy `index.html`, `README.md`, and `LICENSE` to any static host (Netlify, GitHub Pages, etc.)
-3. Or open `index.html` directly in Chrome from your local filesystem
+3. Or open `index.html` directly from your local filesystem. The core app works as a local file; the README/LICENSE popup depends on the browser allowing local `fetch()` access to the adjacent `README.md` and `LICENSE` files.
 
 Once open:
 
@@ -112,7 +112,7 @@ Once open:
 | Firefox | ✅ Supported | Works normally |
 | Edge | ✅ Supported | Works normally |
 | Safari | ✅ Supported | Works normally when hosted |
-| Private/Incognito | ⚠️ Session only | Data lost on close; export before closing |
+| Private/Incognito | ⚠️ Limited | Storage may be temporary or unavailable; export before closing |
 
 > **Note:** If running from a local `file://` path rather than a hosted URL, Safari may restrict localStorage. Use the **Export** button to save your data in that case.
 
@@ -138,21 +138,41 @@ This format is intentionally simple and human-readable. You can edit it manually
 
 ## Dependencies
 
-All loaded from CDN — no local installation required.
+No package installation is required. Runtime assets are loaded from CDNs or adjacent static files.
 
 | Library | Version | Purpose |
 |---|---|---|
 | [Chart.js](https://www.chartjs.org/) | 4.4.1 | Chart rendering |
 | [marked.js](https://marked.js.org/) | 9.1.6 | README Markdown rendering |
 | [Google Fonts](https://fonts.google.com/) | — | DM Sans, DM Mono typefaces |
+| [PayPal Donate SDK](https://www.paypal.com/) | — | Donation button rendering |
+
+The app can be opened without a backend, but it is not fully self-contained offline: charts, fonts, Markdown rendering, the PayPal button, and the README screenshot rely on CDN or remote assets unless they are already cached by the browser.
+
+## Tests
+
+The single HTML file includes a small built-in unit test runner for parsing, serialization, example schedule generation, weight scaling, PK contribution math, concentration summation, and steady-state detection.
+
+Run it from the browser console:
+
+```js
+runUnitTests()
+```
+
+Or open:
+
+```text
+index.html?test=1
+```
 
 ## Repository Structure
 
 ```
-tirzepatide-pk-plotter/
+tirzplotter/
 ├── index.html       ← main application
 ├── README.md
-└── LICENSE
+├── LICENSE
+└── netlify.toml
 ```
 
 ---
@@ -160,6 +180,7 @@ tirzepatide-pk-plotter/
 ## References
 
 - FDA NDA 215866 Clinical Pharmacology Review — Tirzepatide (Mounjaro), Eli Lilly and Company, 2022. Available at: https://www.accessdata.fda.gov/drugsatfda_docs/nda/2022/215866Orig1s000ClinPharmR.pdf
+- FDA Mounjaro prescribing information — current tirzepatide labeling. Available at: https://www.fda.gov/media/191437/download
 - DrugBank: Tirzepatide (DB15171) — https://go.drugbank.com/drugs/DB15171
 
 ---
