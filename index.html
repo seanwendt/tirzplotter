@@ -759,24 +759,20 @@
 
 <script>
 // ─── PK CONSTANTS — FDA NDA 215866 ───────────────────────────────────────────
-const F   = 0.809;     // subcutaneous bioavailability
-const CL  = 0.061;     // population mean clearance (L/h)
-const Vd  = 10.3;      // apparent Vd (L)
-const ke  = CL / Vd;   // elimination rate constant h⁻¹ = 0.005922 → t½ ≈ 117 h ≈ 4.88 days
-// ka derived numerically: tmax = ln(ka/ke)/(ka-ke) = 48h (midpoint of 24–72h FDA range)
-// Solution: ka ≈ 0.0695 h⁻¹
-const ka  = 0.0695;
+const F = 0.809;       // subcutaneous bioavailability
+const CL = 0.061;      // population mean clearance (L/h)
+const Vd = 10.3;       // apparent volume of distribution (L)
+const ka = 0.0695;     // absorption rate constant (h^-1), chosen for tmax near 48h
 
-// Weight scaling: log-linear power model fit to FDA popPK data
-// AUC ∝ (weight/90)^(-1.0) — inverse: heavier patients have lower AUC
-// Implemented as CL_eff = CL / scalar, so ke_eff = CL_eff / Vd
+// Body weight scaling from the FDA population PK model.
+// Lower body weight increases exposure; higher body weight decreases exposure.
 const WEIGHT_EXP = -1.0;
 const WEIGHT_REF = 90; // kg
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
-// Each entry: { date: Date, amount: number (mg), weightKg: number }
+// Dose shape: { date: Date, amount: number (mg), weightKg: number }
 let doses = [];
-let currentUnit = 'ngml'; // 'ngml' or 'mg'
+let currentUnit = 'ngml'; // 'ngml', 'mg', or 'wt'
 let chartInstance = null;
 let chartJsReady = false;
 let pendingRender = null;
@@ -785,8 +781,47 @@ let pendingRender = null;
 const STORAGE_KEY = 'tirzepatide_pk_doses_v1';
 let storageAvailable = false;
 
+function doseToJSON(dose) {
+  return {
+    dateISO: dose.date.toISOString(),
+    amount: dose.amount,
+    weightKg: dose.weightKg
+  };
+}
+
+function parseDoseRecord(record, index = 0) {
+  const row = index + 1;
+
+  if (!record.dateISO || record.amount == null || record.weightKg == null) {
+    throw new Error(`Record ${row} is missing dateISO, amount, or weightKg`);
+  }
+
+  const date = new Date(record.dateISO);
+  const amount = parseFloat(record.amount);
+  const weightKg = parseFloat(record.weightKg);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(`Record ${row} has an invalid date`);
+  }
+  if (!Number.isFinite(amount) || amount < 0.5 || amount > 15) {
+    throw new Error(`Record ${row} dose must be between 0.5 and 15 mg`);
+  }
+  if (!Number.isFinite(weightKg) || weightKg < 30 || weightKg > 300) {
+    throw new Error(`Record ${row} weight must be between 30 and 300 kg`);
+  }
+
+  return { date, amount, weightKg };
+}
+
+function parseDosePayload(payload) {
+  if (!Array.isArray(payload)) {
+    throw new Error('Expected an array of dose records');
+  }
+  return payload.map(parseDoseRecord).sort((a, b) => a.date - b.date);
+}
+
 function detectStorage() {
-  // Test localStorage availability — fails silently in Safari file://, private mode, etc.
+  // localStorage can fail under file://, private browsing, or strict browser settings.
   try {
     const test = '__storage_test__';
     localStorage.setItem(test, '1');
@@ -800,12 +835,7 @@ function detectStorage() {
 function persistDoses() {
   if (!storageAvailable) return;
   try {
-    const payload = doses.map(d => ({
-      dateISO:  d.date.toISOString(),
-      amount:   d.amount,
-      weightKg: d.weightKg
-    }));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(doses.map(doseToJSON)));
   } catch(e) {
     console.warn('tirzepatide-pk: failed to save to localStorage', e);
   }
@@ -816,14 +846,8 @@ function loadPersistedDoses() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
-    const payload = JSON.parse(raw);
-    if (!Array.isArray(payload) || payload.length === 0) return;
-    doses = payload.map(d => ({
-      date:     new Date(d.dateISO),
-      amount:   parseFloat(d.amount),
-      weightKg: parseFloat(d.weightKg)
-    }));
-    doses.sort((a, b) => a.date - b.date);
+    doses = parseDosePayload(JSON.parse(raw));
+    if (doses.length === 0) return;
     renderDoseList();
     updateChart();
   } catch(e) {
@@ -846,12 +870,7 @@ function updateStorageUI() {
 // ─── EXPORT / IMPORT ─────────────────────────────────────────────────────────
 function exportJSON() {
   if (doses.length === 0) { alert('No data to export.'); return; }
-  const payload = doses.map(d => ({
-    dateISO:  d.date.toISOString(),
-    amount:   d.amount,
-    weightKg: d.weightKg
-  }));
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(doses.map(doseToJSON), null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   const dateStr = new Date().toISOString().split('T')[0];
@@ -873,27 +892,12 @@ function importJSON(event) {
   reader.onload = function(e) {
     try {
       const payload = JSON.parse(e.target.result);
-      if (!Array.isArray(payload)) throw new Error('Expected an array');
-      const imported = payload.map((d, idx) => {
-        if (!d.dateISO || d.amount == null || d.weightKg == null) throw new Error('Missing fields');
-        const date = new Date(d.dateISO);
-        const amount = parseFloat(d.amount);
-        const weightKg = parseFloat(d.weightKg);
-        if (Number.isNaN(date.getTime())) throw new Error(`Invalid date in record ${idx + 1}`);
-        if (!Number.isFinite(amount) || amount < 0.5 || amount > 15) {
-          throw new Error(`Dose in record ${idx + 1} must be between 0.5 and 15 mg`);
-        }
-        if (!Number.isFinite(weightKg) || weightKg < 30 || weightKg > 300) {
-          throw new Error(`Weight in record ${idx + 1} must be between 30 and 300 kg`);
-        }
-        return { date, amount, weightKg };
-      });
-      // Confirm if data already exists
+      const imported = parseDosePayload(payload);
+
       if (doses.length > 0) {
         if (!confirm(`Replace your ${doses.length} existing injection(s) with ${imported.length} imported record(s)?`)) return;
       }
       doses = imported;
-      doses.sort((a, b) => a.date - b.date);
       persistDoses();
       renderDoseList();
       updateChart();
@@ -1002,19 +1006,31 @@ function clearDoses() {
   updateChart();
 }
 
-function fillExample() {
-  // Titration example: 2.5mg × 4 weeks → 5mg × 5 weeks, with slow weight loss
-  doses = [];
-  const start = new Date();
-  start.setDate(start.getDate() - 56);
+function buildExampleDoses(startDate) {
+  const exampleDoses = [];
+  const start = new Date(startDate);
   start.setHours(12, 0, 0, 0);
+
   const startWeightLbs = 230;
   for (let i = 0; i < 9; i++) {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i * 7);
-    const wLbs = startWeightLbs - i * 1.2; // ~1.2 lb/week loss
-    doses.push({ date: d, amount: i < 4 ? 2.5 : 5, weightKg: wLbs / 2.20462 });
+    const date = new Date(start);
+    date.setDate(start.getDate() + i * 7);
+
+    exampleDoses.push({
+      date,
+      amount: i < 4 ? 2.5 : 5,
+      weightKg: (startWeightLbs - i * 1.2) / 2.20462
+    });
   }
+
+  return exampleDoses;
+}
+
+function fillExample() {
+  // Titration example: 2.5mg for 4 weeks, then 5mg for 5 weeks.
+  const start = new Date();
+  start.setDate(start.getDate() - 56);
+  doses = buildExampleDoses(start);
   persistDoses();
   renderDoseList();
   updateChart();
@@ -1052,7 +1068,7 @@ function fmtDate(d) {
 function doseContrib(amount_mg, weightKg, t_hours) {
   if (t_hours <= 0) return 0;
   const scalar  = calcWeightScalar(weightKg);
-  const CL_eff  = CL / scalar;           // lower weight → lower CL → higher AUC
+  const CL_eff  = CL / scalar;           // lower weight means lower CL and higher AUC
   const ke_eff  = CL_eff / Vd;
   const denom   = ka - ke_eff;
   let c;
@@ -1065,25 +1081,28 @@ function doseContrib(amount_mg, weightKg, t_hours) {
   return Math.max(0, c) * 1000; // µg/mL → ng/mL
 }
 
-// Superposition of all doses up to time t
-function computeConc(t_unix_ms) {
-  return doses.reduce((sum, d) => {
+function computeConcForDoses(t_unix_ms, doseList) {
+  return doseList.reduce((sum, d) => {
     const dt_h = (t_unix_ms - d.date.getTime()) / 3600000;
     return sum + doseContrib(d.amount, d.weightKg, dt_h);
   }, 0);
 }
 
+// Superposition of every logged injection up to time t.
+function computeConc(t_unix_ms) {
+  return computeConcForDoses(t_unix_ms, doses);
+}
+
 // ─── STEADY STATE DETECTION ──────────────────────────────────────────────────
 // Compute pre-dose trough for each dose ≥ 2nd. SS = when consecutive troughs
 // differ by < 5% for at least one pair.
-function detectSteadyState() {
-  if (doses.length < 3) return { reached: false };
+function detectSteadyStateForDoses(doseList) {
+  if (doseList.length < 3) return { reached: false };
 
   const troughs = [];
-  for (let i = 1; i < doses.length; i++) {
-    // Sample 1 minute before each subsequent dose
-    const t_ms = doses[i].date.getTime() - 60000;
-    troughs.push(computeConc(t_ms));
+  for (let i = 1; i < doseList.length; i++) {
+    const t_ms = doseList[i].date.getTime() - 60000;
+    troughs.push(computeConcForDoses(t_ms, doseList));
   }
 
   for (let i = 1; i < troughs.length; i++) {
@@ -1096,6 +1115,10 @@ function detectSteadyState() {
     }
   }
   return { reached: false };
+}
+
+function detectSteadyState() {
+  return detectSteadyStateForDoses(doses);
 }
 
 // ─── UNIT HELPERS ────────────────────────────────────────────────────────────
@@ -1539,6 +1562,128 @@ function renderChart(labels, data, doseTicks, todayIdx, unit) {
       }
     }]
   });
+}
+
+// ─── UNIT TESTS ──────────────────────────────────────────────────────────────
+// Kept in this HTML file by design. Run from the console with:
+//   runUnitTests()
+// Or open index.html?test=1 to run them automatically.
+function runUnitTests() {
+  const tests = [];
+
+  function test(name, fn) {
+    tests.push({ name, fn });
+  }
+
+  function assert(condition, message) {
+    if (!condition) throw new Error(message || 'Assertion failed');
+  }
+
+  function assertNear(actual, expected, tolerance, message) {
+    const delta = Math.abs(actual - expected);
+    assert(delta <= tolerance, `${message}: expected ${expected}, got ${actual}`);
+  }
+
+  test('formatDateInputValue returns yyyy-mm-dd', () => {
+    assert(formatDateInputValue(new Date('2026-04-05T12:00:00')) === '2026-04-05');
+  });
+
+  test('calcWeightScalar matches expected reference behavior', () => {
+    assertNear(calcWeightScalar(90), 1, 0.000001, '90 kg should be the reference');
+    assert(calcWeightScalar(70) > 1, 'lower weight should increase exposure');
+    assert(calcWeightScalar(120) < 1, 'higher weight should decrease exposure');
+  });
+
+  test('doseContrib is zero before dosing and positive after dosing', () => {
+    assert(doseContrib(2.5, 90, 0) === 0, 'dose time should be zero');
+    assert(doseContrib(2.5, 90, -1) === 0, 'pre-dose time should be zero');
+    assert(doseContrib(2.5, 90, 48) > 0, 'post-dose concentration should be positive');
+  });
+
+  test('single 2.5mg dose peaks near the FDA reference Cmax', () => {
+    const peak = doseContrib(2.5, 90, 48);
+    assertNear(peak, 160, 25, '48h concentration should be near 160 ng/mL');
+  });
+
+  test('parseDosePayload validates, parses, and sorts records', () => {
+    const parsed = parseDosePayload([
+      { dateISO: '2026-04-08T12:00:00.000Z', amount: '5', weightKg: '88' },
+      { dateISO: '2026-04-01T12:00:00.000Z', amount: 2.5, weightKg: 90 }
+    ]);
+
+    assert(parsed.length === 2, 'two records should parse');
+    assert(parsed[0].amount === 2.5, 'records should sort oldest first');
+    assert(parsed[1].date instanceof Date, 'dateISO should become a Date');
+  });
+
+  test('parseDosePayload rejects invalid records', () => {
+    let failed = false;
+    try {
+      parseDosePayload([{ dateISO: 'bad-date', amount: 2.5, weightKg: 90 }]);
+    } catch(e) {
+      failed = true;
+    }
+    assert(failed, 'invalid date should throw');
+  });
+
+  test('doseToJSON round-trips through parseDosePayload', () => {
+    const dose = { date: new Date('2026-04-01T12:00:00.000Z'), amount: 2.5, weightKg: 90 };
+    const parsed = parseDosePayload([doseToJSON(dose)])[0];
+    assert(parsed.date.toISOString() === dose.date.toISOString(), 'date should round-trip');
+    assert(parsed.amount === dose.amount, 'amount should round-trip');
+    assert(parsed.weightKg === dose.weightKg, 'weight should round-trip');
+  });
+
+  test('buildExampleDoses creates the expected titration schedule', () => {
+    const example = buildExampleDoses(new Date('2026-01-01T12:00:00'));
+    assert(example.length === 9, 'example should have 9 doses');
+    assert(example[0].amount === 2.5, 'first four doses should be 2.5mg');
+    assert(example[3].amount === 2.5, 'fourth dose should be 2.5mg');
+    assert(example[4].amount === 5, 'fifth dose should step up to 5mg');
+    assert(example[8].weightKg < example[0].weightKg, 'example weight should trend down');
+  });
+
+  test('computeConcForDoses sums multiple injections', () => {
+    const doseList = [
+      { date: new Date('2026-01-01T12:00:00Z'), amount: 2.5, weightKg: 90 },
+      { date: new Date('2026-01-08T12:00:00Z'), amount: 2.5, weightKg: 90 }
+    ];
+    const afterSecond = new Date('2026-01-10T12:00:00Z').getTime();
+    assert(computeConcForDoses(afterSecond, doseList) > doseContrib(2.5, 90, 48));
+  });
+
+  test('detectSteadyStateForDoses reports false for too few doses', () => {
+    const doseList = [
+      { date: new Date('2026-01-01T12:00:00Z'), amount: 2.5, weightKg: 90 },
+      { date: new Date('2026-01-08T12:00:00Z'), amount: 2.5, weightKg: 90 }
+    ];
+    assert(detectSteadyStateForDoses(doseList).reached === false);
+  });
+
+  const results = tests.map(({ name, fn }) => {
+    try {
+      fn();
+      return { name, status: 'pass' };
+    } catch(error) {
+      return { name, status: 'fail', message: error.message };
+    }
+  });
+
+  const failed = results.filter(r => r.status === 'fail');
+  console.table(results);
+
+  if (failed.length > 0) {
+    throw new Error(`${failed.length} unit test(s) failed`);
+  }
+
+  console.info(`All ${results.length} unit tests passed.`);
+  return results;
+}
+
+window.runUnitTests = runUnitTests;
+
+if (new URLSearchParams(location.search).get('test') === '1') {
+  window.addEventListener('load', () => runUnitTests());
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
