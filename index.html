@@ -674,7 +674,7 @@
         </div>
         <div class="toolbar-right">
           <label style="margin:0; font-size:10px; color:var(--text-muted); white-space:nowrap; cursor:default;">Range:</label>
-          <select class="range-select" id="rangeSelect" onchange="updateChart()">
+          <select class="range-select" id="rangeSelect" onchange="handleRangeChange()">
             <option value="30">30 days</option>
             <option value="60" selected>60 days</option>
             <option value="90">90 days</option>
@@ -803,6 +803,7 @@ let currentUnit = 'ngml'; // 'ngml', 'mg', or 'wt'
 let chartInstance = null;
 let chartJsReady = false;
 let pendingRender = null;
+let userRangeOverride = false;
 
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'tirzepatide_pk_doses_v1';
@@ -875,6 +876,7 @@ function loadPersistedDoses() {
     if (!raw) return;
     doses = parseDosePayload(JSON.parse(raw));
     if (doses.length === 0) return;
+    resetRangeAuto();
     renderDoseList();
     updateChart();
   } catch(e) {
@@ -925,6 +927,7 @@ function importJSON(event) {
         if (!confirm(`Replace your ${doses.length} existing injection(s) with ${imported.length} imported record(s)?`)) return;
       }
       doses = imported;
+      resetRangeAuto();
       persistDoses();
       renderDoseList();
       updateChart();
@@ -1026,6 +1029,7 @@ function removeDose(idx) {
 function clearDoses() {
   if (doses.length > 0 && !confirm('Clear all injections? This cannot be undone.')) return;
   doses = [];
+  resetRangeAuto();
   persistDoses();
   if (chartInstance)   { chartInstance.destroy();   chartInstance   = null; }
   if (wtChartInstance) { wtChartInstance.destroy();  wtChartInstance = null; }
@@ -1058,6 +1062,7 @@ function fillExample() {
   const start = new Date();
   start.setDate(start.getDate() - 56);
   doses = buildExampleDoses(start);
+  resetRangeAuto();
   persistDoses();
   renderDoseList();
   updateChart();
@@ -1177,18 +1182,31 @@ function setUnit(u) {
 // Range tiers in days — must match the <option> values in rangeSelect
 const RANGE_TIERS = [30, 60, 90, 180, 365];
 
-function autoRange() {
-  if (doses.length < 2) return;
-  const firstDoseMs = doses[0].date.getTime();
-  const lastDoseMs  = doses[doses.length - 1].date.getTime();
-  // Add 14 days of forward padding so the last dose has a visible tail
+function resetRangeAuto() {
+  userRangeOverride = false;
+}
+
+function handleRangeChange() {
+  userRangeOverride = true;
+  updateChart();
+}
+
+function getNeededRangeDays(doseList) {
+  if (doseList.length < 2) return null;
+
+  const firstDoseMs = doseList[0].date.getTime();
+  const lastDoseMs  = doseList[doseList.length - 1].date.getTime();
   const spanDays = (lastDoseMs - firstDoseMs) / 86400000 + 14;
 
+  return RANGE_TIERS.find(t => t >= spanDays) || RANGE_TIERS[RANGE_TIERS.length - 1];
+}
+
+function autoRange() {
+  if (userRangeOverride) return;
+  if (doses.length < 2) return;
   const select      = document.getElementById('rangeSelect');
   const currentVal  = parseInt(select.value);
-
-  // Find the smallest tier that fits the data span
-  const needed = RANGE_TIERS.find(t => t >= spanDays) || RANGE_TIERS[RANGE_TIERS.length - 1];
+  const needed      = getNeededRangeDays(doses);
 
   // Only expand — never shrink the user's selection
   if (needed > currentVal) {
@@ -1668,6 +1686,32 @@ function runUnitTests() {
     assert(example[3].amount === 2.5, 'fourth dose should be 2.5mg');
     assert(example[4].amount === 5, 'fifth dose should step up to 5mg');
     assert(example[8].weightKg < example[0].weightKg, 'example weight should trend down');
+  });
+
+  test('manual range selection overrides auto range expansion', () => {
+    const previousDoses = doses;
+    const previousOverride = userRangeOverride;
+    const select = document.getElementById('rangeSelect');
+    const previousRange = select.value;
+
+    doses = parseDosePayload([
+      { dateISO: '2026-01-01T20:00:00.000Z', amount: 2.5, weightKg: 90 },
+      { dateISO: '2026-06-18T19:00:00.000Z', amount: 15, weightKg: 90 }
+    ]);
+
+    select.value = '60';
+    userRangeOverride = false;
+    autoRange();
+    assert(String(select.value) === '365', 'auto range should expand to fit a long schedule');
+
+    select.value = '30';
+    userRangeOverride = true;
+    autoRange();
+    assert(select.value === '30', 'manual range should not be overwritten by auto range');
+
+    doses = previousDoses;
+    userRangeOverride = previousOverride;
+    select.value = previousRange;
   });
 
   test('computeConcForDoses sums multiple injections', () => {
