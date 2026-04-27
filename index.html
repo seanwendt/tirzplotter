@@ -113,6 +113,19 @@
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-glow);
   }
+  input.attention-pulse {
+    animation: attentionPulse 3.0s ease-in-out 1;
+  }
+  @keyframes attentionPulse {
+    0%, 100% {
+      border-color: var(--border);
+      box-shadow: none;
+    }
+    45% {
+      border-color: var(--warn);
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.22);
+    }
+  }
   input[type="number"] { -moz-appearance: textfield; }
   input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
   .input-wrap { position: relative; }
@@ -996,6 +1009,12 @@ function updateWeightHint() {
 }
 
 // ─── DOSE MANAGEMENT ─────────────────────────────────────────────────────────
+function pulseElement(el) {
+  el.classList.remove('attention-pulse');
+  void el.offsetWidth; // restart the CSS animation if it was already running
+  el.classList.add('attention-pulse');
+}
+
 function addDose() {
   const dateStr = document.getElementById('doseDate').value;
   const amount  = parseFloat(document.getElementById('doseAmount').value);
@@ -1016,11 +1035,19 @@ function addDose() {
   const increment = Math.max(1, parseInt(document.getElementById('dayIncrement').value) || 7);
   const next = new Date(date);
   next.setDate(next.getDate() + increment);
-  document.getElementById('doseDate').value = formatDateInputValue(next);
+  const dateInput = document.getElementById('doseDate');
+  dateInput.value = formatDateInputValue(next);
+  pulseElement(dateInput);
 }
 
 function removeDose(idx) {
+  const removed = doses[idx];
+  if (!removed) return;
+
+  const dateInput = document.getElementById('doseDate');
   doses.splice(idx, 1);
+  dateInput.value = formatDateInputValue(removed.date);
+  pulseElement(dateInput);
   persistDoses();
   renderDoseList();
   updateChart();
@@ -1712,6 +1739,27 @@ function runUnitTests() {
     doses = previousDoses;
     userRangeOverride = previousOverride;
     select.value = previousRange;
+  });
+
+  test('removeDose sets the date picker to the deleted entry date', () => {
+    const previousDoses = doses;
+    const dateInput = document.getElementById('doseDate');
+    const previousDateValue = dateInput.value;
+
+    doses = [
+      { date: new Date('2026-04-01T12:00:00'), amount: 2.5, weightKg: 90 },
+      { date: new Date('2026-04-08T12:00:00'), amount: 5, weightKg: 90 }
+    ];
+    dateInput.value = '2026-04-15';
+
+    removeDose(1);
+
+    assert(dateInput.value === '2026-04-08', 'date picker should match deleted dose date');
+    assert(doses.length === 1, 'one dose should remain');
+    assert(doses[0].amount === 2.5, 'the correct dose should remain');
+
+    doses = previousDoses;
+    dateInput.value = previousDateValue;
   });
 
   test('computeConcForDoses sums multiple injections', () => {
