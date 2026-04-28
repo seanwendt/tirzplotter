@@ -93,8 +93,8 @@ The tool is hosted and ready to use — no installation required. Simply open it
 If you prefer to self-host or run it locally:
 
 1. Clone or download the repository
-2. Deploy `index.html`, `README.md`, and `LICENSE` to any static host (Netlify, GitHub Pages, etc.)
-3. Or open `index.html` directly from your local filesystem. The core app works as a local file; the README/LICENSE popup depends on the browser allowing local `fetch()` access to the adjacent `README.md` and `LICENSE` files.
+2. Deploy the `web/` directory to any static host (Netlify, GitHub Pages, etc.)
+3. Or open `web/index.html` directly from your local filesystem. The core app works as a local file; the README/LICENSE popup depends on the browser allowing local `fetch()` access to adjacent files.
 
 Once open:
 
@@ -169,9 +169,12 @@ index.html?test=1
 
 ```
 tirzplotter/
-├── index.html       ← main application
-├── README.md
-├── LICENSE
+├── web/             ← deployed static web app
+│   ├── index.html
+│   ├── README.md
+│   ├── LICENSE
+│   └── assets/
+├── mobile/          ← Flutter Android wrapper
 └── netlify.toml
 ```
 
