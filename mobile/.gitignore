@@ -1,0 +1,10 @@
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+.idea/
+*.iml
+
+# Generated locally when running `flutter create . --platforms=ios,android`.
+ios/
