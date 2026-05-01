@@ -1176,7 +1176,7 @@ function renderDoseList() {
     el.innerHTML = '<div class="empty-state">No injections logged yet.</div>';
     return;
   }
-  el.innerHTML = doses.map((d, i) => {
+  el.innerHTML = doses.map((d, i) => ({ d, i })).reverse().map(({ d, i }) => {
     const lbs = (d.weightKg * 2.20462).toFixed(0);
     return `<div class="dose-item">
       <div class="dose-dot"></div>
@@ -1889,6 +1889,21 @@ function runUnitTests() {
 
     doses = previousDoses;
     dateInput.value = previousDateValue;
+  });
+
+  test('renderDoseList displays newest injections first', () => {
+    const previousDoses = doses;
+
+    doses = [
+      { date: new Date('2026-04-01T12:00:00'), amount: 2.5, weightKg: 90 },
+      { date: new Date('2026-04-08T12:00:00'), amount: 5, weightKg: 90 }
+    ];
+
+    renderDoseList();
+    const firstDate = document.querySelector('#doseList .dose-date').textContent;
+    assert(firstDate.includes('Apr 8'), 'newest injection should render first');
+
+    doses = previousDoses;
   });
 
   test('computeConcForDoses sums multiple injections', () => {
