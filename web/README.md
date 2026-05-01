@@ -21,10 +21,10 @@ This tool models that behavior using a **one-compartment pharmacokinetic model w
 - **Injection schedule logging** — add multiple doses with individual dates and amounts
 - **Per-injection body weight** — each dose records weight at time of injection; the PK model scales clearance independently per dose based on FDA population PK data
 - **Three chart views:**
-  - `ng/mL` — plasma concentration in standard clinical units
   - `mg equiv.` — estimated total drug in the central compartment (C × Vd)
-  - `Weight` — body weight over time, one point per injection
-- **Configurable time range** — 30 days to 1 year
+  - `ng/mL` — plasma concentration in standard clinical units
+  - `Weight log` — body weight over time, one point per injection
+- **Automatic time range** — chart spans 2 days before the first injection through 4 weeks after the latest injection
 - **Steady state detection** — computed from consecutive pre-dose trough estimates (relative change < 5%), not a fixed heuristic
 - **Key statistics** — current estimated concentration, Cmax, Cmin (trough), and steady state status, each with explanatory tooltips
 - **Dose markers and TODAY line** overlaid on the PK chart when they fall inside the visible date range
@@ -101,7 +101,7 @@ Once open:
 1. Enter a date, dose amount, and your body weight at the time of injection
 2. Click **+ Add Injection**
 3. Repeat for each injection in your schedule
-4. Use the **ng/mL / mg equiv. / Weight** tabs to switch chart views
+4. Use the **mg equiv. / ng/mL / Weight log** tabs to switch chart views
 5. Use **Share** to copy a URL that can restore the same schedule on another browser or machine
 
 ### Data Persistence
