@@ -90,6 +90,7 @@
     color: var(--text-dim);
     display: flex; align-items: center; gap: 8px;
   }
+  .panel-header-text { flex: 1; }
   .panel-body { padding: 16px; }
 
   .form-group { margin-bottom: 12px; }
@@ -287,31 +288,19 @@
   .stat-val.amber { color: var(--warn); }
   .stat-val.blue  { color: var(--accent2); }
 
-  .storage-bar {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 8px; flex-wrap: wrap;
-    padding: 8px 10px;
-    border-radius: var(--radius-sm);
-    margin-bottom: 10px;
+  .storage-status {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 10px;
     font-family: 'DM Mono', monospace; font-size: 10px;
+    color: var(--text-muted);
   }
-  .storage-bar.ok {
-    background: rgba(16,185,129,0.07);
-    border: 1px solid rgba(16,185,129,0.2);
-    color: var(--green);
-  }
-  .storage-bar.warn {
-    background: rgba(245,158,11,0.07);
-    border: 1px solid rgba(245,158,11,0.2);
-    color: var(--warn);
-  }
-  .storage-bar-left { display: flex; align-items: center; gap: 6px; }
+  .storage-status.ok { color: var(--text-muted); }
+  .storage-status.warn { color: var(--warn); }
   .storage-dot {
     width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
   }
-  .storage-bar.ok  .storage-dot { background: var(--green); box-shadow: 0 0 5px var(--green); }
-  .storage-bar.warn .storage-dot { background: var(--warn);  box-shadow: 0 0 5px var(--warn); }
-  .storage-bar-actions { display: flex; gap: 6px; }
+  .storage-status.ok  .storage-dot { background: var(--green); box-shadow: 0 0 5px var(--green); }
+  .storage-status.warn .storage-dot { background: var(--warn);  box-shadow: 0 0 5px var(--warn); }
   .btn-icon {
     display: inline-flex; align-items: center; gap: 4px;
     padding: 4px 9px;
@@ -498,6 +487,39 @@
     border-left: 3px solid var(--accent); margin: 0 0 14px;
     padding: 4px 0 4px 14px; color: var(--text-muted); font-style: italic;
   }
+  .share-copy-row {
+    display: flex; gap: 8px; align-items: stretch; margin: 12px 0;
+  }
+  .share-url {
+    width: 100%;
+    min-height: 118px;
+    resize: vertical;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    outline: none;
+  }
+  .share-url:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .share-note {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+  .share-status {
+    min-height: 18px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--green);
+  }
   .modal-plain {
     font-family: 'DM Mono', monospace; font-size: 11px;
     line-height: 1.8; color: var(--text-dim); white-space: pre-wrap;
@@ -642,27 +664,14 @@
       </div>
 
       <div class="panel" style="margin-top:16px;">
-        <div class="panel-header">Injection Schedule</div>
+        <div class="panel-header">
+          <span class="panel-header-text">Injection Schedule</span>
+          <button class="btn-icon" onclick="openShareModal()" title="Create shareable URL">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
+          </button>
+        </div>
         <div class="panel-body">
-
-          <!-- Storage status + export/import -->
-          <div class="storage-bar ok" id="storageBar">
-            <div class="storage-bar-left">
-              <div class="storage-dot"></div>
-              <span id="storageMsg">Auto-saving to browser storage</span>
-            </div>
-            <div class="storage-bar-actions">
-              <button class="btn-icon" onclick="exportJSON()" title="Download data as JSON backup">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Export
-              </button>
-              <button class="btn-icon" onclick="triggerImport()" title="Load data from JSON backup">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                Import
-              </button>
-              <input type="file" id="importInput" accept=".json" style="display:none;" onchange="importJSON(event)"/>
-            </div>
-          </div>
 
           <div class="dose-list" id="doseList">
             <div class="empty-state">No injections logged yet.</div>
@@ -670,6 +679,10 @@
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button class="btn btn-ghost btn-sm" onclick="fillExample()">Load example</button>
             <button class="btn btn-ghost btn-sm" onclick="clearDoses()">Clear all</button>
+          </div>
+          <div class="storage-status ok" id="storageStatus">
+            <div class="storage-dot"></div>
+            <span id="storageMsg">Auto-saved on this device</span>
           </div>
         </div>
       </div>
@@ -820,6 +833,7 @@ let userRangeOverride = false;
 
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'tirzepatide_pk_doses_v1';
+const SHARE_PARAM = 'share';
 let storageAvailable = false;
 
 function doseToJSON(dose) {
@@ -897,60 +911,121 @@ function loadPersistedDoses() {
   }
 }
 
+function encodeSharePayload(doseList) {
+  const compactPayload = {
+    v: 1,
+    d: doseList.map(d => [d.date.toISOString(), d.amount, d.weightKg])
+  };
+  const json = JSON.stringify(compactPayload);
+  return btoa(json)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+}
+
+function decodeSharePayload(value) {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+  const payload = JSON.parse(atob(padded));
+
+  // v1 share URLs use a compact array format to keep links shorter.
+  // Older share URLs used the same object array as JSON export, so keep supporting both.
+  if (payload && payload.v === 1 && Array.isArray(payload.d)) {
+    return parseDosePayload(payload.d.map(([dateISO, amount, weightKg]) => ({ dateISO, amount, weightKg })));
+  }
+  return parseDosePayload(payload);
+}
+
+function getShareURL() {
+  const url = new URL(window.location.href);
+  url.search = '';
+  url.hash = '';
+  url.searchParams.set(SHARE_PARAM, encodeSharePayload(doses));
+  return url.toString();
+}
+
+function loadSharedDoses() {
+  const params = new URLSearchParams(location.search);
+  const payload = params.get(SHARE_PARAM);
+  if (!payload) return false;
+
+  try {
+    doses = decodeSharePayload(payload);
+    resetRangeAuto();
+    persistDoses();
+    renderDoseList();
+    updateChart();
+    return true;
+  } catch(e) {
+    console.warn('tirzepatide-pk: failed to load shared URL data', e);
+    alert('Could not load shared URL data: ' + e.message);
+    return false;
+  }
+}
+
 function updateStorageUI() {
-  const bar = document.getElementById('storageBar');
+  const status = document.getElementById('storageStatus');
   const msg = document.getElementById('storageMsg');
   if (storageAvailable) {
-    bar.className = 'storage-bar ok';
-    msg.textContent = 'Auto-saving to browser storage';
+    status.className = 'storage-status ok';
+    msg.textContent = 'Auto-saved on this device';
   } else {
-    bar.className = 'storage-bar warn';
-    msg.textContent = 'Browser storage unavailable — use Export to save';
+    status.className = 'storage-status warn';
+    msg.textContent = 'Browser storage unavailable. Use Share to preserve your schedule.';
   }
 }
 
 // ─── EXPORT / IMPORT ─────────────────────────────────────────────────────────
-function exportJSON() {
-  if (doses.length === 0) { alert('No data to export.'); return; }
-  const blob = new Blob([JSON.stringify(doses.map(doseToJSON), null, 2)], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  const dateStr = new Date().toISOString().split('T')[0];
-  a.href     = url;
-  a.download = `tirzepatide-doses-${dateStr}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+function openShareModal() {
+  if (doses.length === 0) { alert('No data to share.'); return; }
+
+  const overlay = document.getElementById('modalOverlay');
+  const title = document.getElementById('modalTitle');
+  const body = document.getElementById('modalBody');
+  const shareUrl = getShareURL();
+
+  title.textContent = 'Share Schedule';
+  body.innerHTML = `
+    <p>This URL contains your full injection schedule in the query string. Anyone with the link can load the same data.</p>
+    <textarea class="share-url" id="shareUrl" readonly>${escapeHtml(shareUrl)}</textarea>
+    <div class="share-copy-row">
+      <button class="btn btn-primary" onclick="copyShareURL()">Copy URL</button>
+    </div>
+    <div class="share-status" id="shareStatus"></div>
+    <div class="share-note">Shared URLs can get long. They include dose dates, dose amounts, and body weights in encoded form, so avoid posting them publicly.</div>
+  `;
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  const textarea = document.getElementById('shareUrl');
+  textarea.focus();
+  textarea.select();
 }
 
-function triggerImport() {
-  document.getElementById('importInput').value = ''; // reset so same file can be re-imported
-  document.getElementById('importInput').click();
-}
+function copyShareURL() {
+  const textarea = document.getElementById('shareUrl');
+  const status = document.getElementById('shareStatus');
+  if (!textarea) return;
 
-function importJSON(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const payload = JSON.parse(e.target.result);
-      const imported = parseDosePayload(payload);
-
-      if (doses.length > 0) {
-        if (!confirm(`Replace your ${doses.length} existing injection(s) with ${imported.length} imported record(s)?`)) return;
-      }
-      doses = imported;
-      resetRangeAuto();
-      persistDoses();
-      renderDoseList();
-      updateChart();
-    } catch(err) {
-      alert('Import failed: ' + err.message + '\n\nMake sure this is a valid tirzepatide export file.');
-    }
+  const showCopied = () => {
+    if (status) status.textContent = 'Copied.';
   };
-  reader.readAsText(file);
-}
 
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(textarea.value).then(showCopied).catch(() => {
+      textarea.focus();
+      textarea.select();
+      document.execCommand('copy');
+      showCopied();
+    });
+    return;
+  }
+
+  textarea.focus();
+  textarea.select();
+  document.execCommand('copy');
+  showCopied();
+}
 
 (function loadChartJs() {
   const s = document.createElement('script');
@@ -981,8 +1056,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateWeightHint();
   });
 
-  // Load persisted data after Chart.js is ready
-  loadPersistedDoses();
+  // Shared URLs intentionally override saved browser data.
+  if (!loadSharedDoses()) loadPersistedDoses();
 });
 
 function formatDateInputValue(d) {
@@ -1642,6 +1717,25 @@ function renderChart(labels, data, doseTicks, todayIdx, unit) {
 // Or open index.html?test=1 to run them automatically.
 function runUnitTests() {
   const tests = [];
+  const rangeSelect = document.getElementById('rangeSelect');
+  const dateInput = document.getElementById('doseDate');
+  const originalState = {
+    doses: doses.map(d => ({ date: new Date(d.date), amount: d.amount, weightKg: d.weightKg })),
+    userRangeOverride,
+    currentUnit,
+    rangeValue: rangeSelect.value,
+    dateValue: dateInput.value
+  };
+
+  function restoreAppState() {
+    doses = originalState.doses.map(d => ({ date: new Date(d.date), amount: d.amount, weightKg: d.weightKg }));
+    userRangeOverride = originalState.userRangeOverride;
+    currentUnit = originalState.currentUnit;
+    rangeSelect.value = originalState.rangeValue;
+    dateInput.value = originalState.dateValue;
+    renderDoseList();
+    updateChart();
+  }
 
   function test(name, fn) {
     tests.push({ name, fn });
@@ -1704,6 +1798,41 @@ function runUnitTests() {
     assert(parsed.date.toISOString() === dose.date.toISOString(), 'date should round-trip');
     assert(parsed.amount === dose.amount, 'amount should round-trip');
     assert(parsed.weightKg === dose.weightKg, 'weight should round-trip');
+  });
+
+  test('share payload round-trips through query-safe encoding', () => {
+    const doseList = parseDosePayload([
+      { dateISO: '2026-04-01T12:00:00.000Z', amount: 2.5, weightKg: 90 },
+      { dateISO: '2026-04-08T12:00:00.000Z', amount: 5, weightKg: 88.5 }
+    ]);
+    const parsed = decodeSharePayload(encodeSharePayload(doseList));
+
+    assert(parsed.length === 2, 'two shared records should parse');
+    assert(parsed[0].date.toISOString() === doseList[0].date.toISOString(), 'shared date should round-trip');
+    assert(parsed[1].amount === 5, 'shared dose should round-trip');
+    assert(parsed[1].weightKg === 88.5, 'shared weight should round-trip');
+  });
+
+  test('compact share payload is shorter than encoded export JSON', () => {
+    const doseList = buildExampleDoses(new Date('2026-01-01T12:00:00'));
+    const legacyJson = JSON.stringify(doseList.map(doseToJSON));
+    const legacyEncoded = btoa(legacyJson).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+
+    assert(encodeSharePayload(doseList).length < legacyEncoded.length, 'compact share payload should reduce URL length');
+  });
+
+  test('legacy object-array share payload remains supported', () => {
+    const legacyPayload = [
+      { dateISO: '2026-04-01T12:00:00.000Z', amount: 2.5, weightKg: 90 }
+    ];
+    const encoded = btoa(JSON.stringify(legacyPayload))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/g, '');
+    const parsed = decodeSharePayload(encoded);
+
+    assert(parsed.length === 1, 'legacy shared records should parse');
+    assert(parsed[0].amount === 2.5, 'legacy shared dose should round-trip');
   });
 
   test('buildExampleDoses creates the expected titration schedule', () => {
@@ -1790,6 +1919,7 @@ function runUnitTests() {
 
   const failed = results.filter(r => r.status === 'fail');
   console.table(results);
+  restoreAppState();
 
   if (failed.length > 0) {
     throw new Error(`${failed.length} unit test(s) failed`);

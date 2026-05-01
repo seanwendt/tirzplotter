@@ -29,7 +29,7 @@ This tool models that behavior using a **one-compartment pharmacokinetic model w
 - **Key statistics** — current estimated concentration, Cmax, Cmin (trough), and steady state status, each with explanatory tooltips
 - **Dose markers and TODAY line** overlaid on the PK chart when they fall inside the visible date range
 - **Persistent storage** — auto-saves to `localStorage` on every change; status indicator shows whether browser storage is available
-- **Export / Import** — download your data as a portable JSON backup; import it on any browser or machine
+- **Shareable schedules** — generate a copyable URL that contains your full schedule; no backend required
 - **Static hosting friendly** — works without a backend; CDN assets are used for charts, fonts, README rendering, and the donation button
 
 ---
@@ -102,7 +102,7 @@ Once open:
 2. Click **+ Add Injection**
 3. Repeat for each injection in your schedule
 4. Use the **ng/mL / mg equiv. / Weight** tabs to switch chart views
-5. Use **Export** to download a JSON backup of your data
+5. Use **Share** to copy a URL that can restore the same schedule on another browser or machine
 
 ### Data Persistence
 
@@ -112,27 +112,26 @@ Once open:
 | Firefox | ✅ Supported | Works normally |
 | Edge | ✅ Supported | Works normally |
 | Safari | ✅ Supported | Works normally when hosted |
-| Private/Incognito | ⚠️ Limited | Storage may be temporary or unavailable; export before closing |
+| Private/Incognito | ⚠️ Limited | Storage may be temporary or unavailable; use Share before closing |
 
-> **Note:** If running from a local `file://` path rather than a hosted URL, Safari may restrict localStorage. Use the **Export** button to save your data in that case.
+> **Note:** If running from a local `file://` path rather than a hosted URL, Safari may restrict localStorage. Use the **Share** button to preserve your schedule in that case.
 
-The storage status indicator in the Injection Schedule panel shows whether auto-save is active. If it shows an amber warning, use the **Export** button to save your data before closing.
+The storage status note in the Injection Schedule panel shows whether auto-save is active. If it shows an amber warning, use **Share** before closing.
 
-### Export / Import Format
+### Share URL Format
 
-Data is stored as a JSON array. Each entry contains:
+Share URLs store a compact, encoded copy of the same schedule data directly in the `share` query parameter. The decoded payload uses a versioned format:
 
 ```json
-[
-  {
-    "dateISO": "2026-04-13T12:00:00.000Z",
-    "amount": 2.5,
-    "weightKg": 89.8
-  }
-]
+{
+  "v": 1,
+  "d": [
+    ["2026-04-13T12:00:00.000Z", 2.5, 89.8]
+  ]
+}
 ```
 
-This format is intentionally simple and human-readable. You can edit it manually if needed.
+Each dose row is `[dateISO, amount, weightKg]`. The compact format keeps URLs shorter while preserving backward compatibility for older shared links.
 
 ---
 
